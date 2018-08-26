@@ -1,9 +1,23 @@
+# Terraform
+
 #  Local .terraform directories
 **/.terraform/*
+
+# secrets directories
+**/secrets/*
+
+# secrets files
+*.secrets.*
+*.secrets
+
+# backend files
+*.backend.tf
+*.backend.*
+*.backend
 
 # .tfstate files
 *.tfstate
 *.tfstate.*
 
 # .tfvars files
-*.tfvars
+# *.tfvars
