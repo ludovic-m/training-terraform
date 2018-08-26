@@ -1,5 +1,19 @@
 # Coding Dojo Terraform
 
+<!-- toc -->
+
+- [Prérequis](#prerequis)
+- [Installation de Terraform](#installation-de-terraform)
+  * [Installation manuelle](#installation-manuelle)
+  * [Installation via Chocolatey](#installation-via-chocolatey)
+- [Exercice 1 : Initialisation de Terraform et création d'un resource group](#exercice-1--initialisation-de-terraform-et-creation-dun-resource-group)
+- [Exercice 2 : Création d'un Virtual Network](#exercice-2--creation-dun-virtual-network)
+- [Exercice 3 : Utilisation de variables](#exercice-3--utilisation-de-variables)
+- [Exercice 4 : Création de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
+- [Exercice 5 : Travailler en équipe sur le même projet (remote tfstate)](#exercice-5--travailler-en-equipe-sur-le-meme-projet-remote-tfstate)
+
+<!-- tocstop -->
+
 ## Prérequis
 
 * Une souscription Azure active (dont vous êtes l'administrateur)
@@ -108,7 +122,7 @@ resource "azurerm_virtual_network" "vnet_coding_dojo" {
    dns_servers = ["10.0.0.4"]
 }
 
-# Snippet : tf_azurerm_subnet
+# Snippet : tf-azurerm_subnet
 resource "azurerm_subnet" "subnet_coding_dojo" {
    name = "subnet_coding_dojo"
    resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
