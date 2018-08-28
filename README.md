@@ -2,19 +2,20 @@
 
 <!-- toc -->
 
-- [Prérequis](#prerequis)
-- [Installation de Terraform](#installation-de-terraform)
-  * [Installation manuelle](#installation-manuelle)
-  * [Installation via Chocolatey](#installation-via-chocolatey)
-- [Exercice 1 : Initialisation de Terraform et création d'un resource group](#exercice-1--initialisation-de-terraform-et-creation-dun-resource-group)
-- [Exercice 2 : Création d'un Virtual Network](#exercice-2--creation-dun-virtual-network)
-- [Exercice 3 : Utilisation de variables](#exercice-3--utilisation-de-variables)
-- [Exercice 4 : Création de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
-- [Exercice 5 : Travailler en équipe sur le même projet (remote tfstate)](#exercice-5--travailler-en-equipe-sur-le-meme-projet-remote-tfstate)
+- [Coding Dojo Terraform](#coding-dojo-terraform)
+  - [Prerequis](#prerequis)
+  - [Installation de Terraform](#installation-de-terraform)
+    - [Installation manuelle](#installation-manuelle)
+    - [Installation via Chocolatey](#installation-via-chocolatey)
+  - [Exercice 1 : Initialisation de Terraform et creation d'un resource group](#exercice-1--initialisation-de-terraform-et-creation-dun-resource-group)
+  - [Exercice 2 : Creation d'un Virtual Network](#exercice-2--creation-dun-virtual-network)
+  - [Exercice 3 : Utilisation de variables](#exercice-3--utilisation-de-variables)
+  - [Exercice 4 : Creation de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
+  - [Exercice 5 : Travailler en equipe sur le projet (remote tfstate)](#exercice-5--travailler-en-equipe-sur-le-projet-remote-tfstate)
 
 <!-- tocstop -->
 
-## Prérequis
+## Prerequis
 
 * Une souscription Azure active (dont vous êtes l'administrateur)
 * Visual Studio Code
@@ -29,8 +30,8 @@ Vous pouvez installer Terraform de deux façons
 
 ### Installation manuelle
 
-* Télécharger le package sur le site de Terraform : https://www.terraform.io/downloads.html
-* Mettre à jour le PATH pour rendre le binaire Terraform accessible : https://stackoverflow.com/questions/1618280/where-can-i-set-path-to-make-exe-on-windows
+- Télécharger le package sur le site de Terraform : https://www.terraform.io/downloads.html
+- Mettre à jour le PATH pour rendre le binaire Terraform accessible : https://stackoverflow.com/questions/1618280/where-can-i-set-path-to-make-exe-on-windows
 
 ### Installation via Chocolatey
 
@@ -48,7 +49,7 @@ Vous pouvez ensuite installer Terraform
 choco install terraform
 ```
 
-## Exercice 1 : Initialisation de Terraform et création d'un resource group
+## Exercice 1 : Initialisation de Terraform et creation d'un resource group
 
 Un projet terraform est constitué d'un ensemble de fichiers `*.tf`. Les fichiers Terraform sont écrits en HCL (HashiCorp Configuration Language).
 
@@ -108,7 +109,7 @@ Avec la commande `az group list` ou bien directement depuis le portail Azure, vo
 
 Un fichier `terraform.tfstate` a été créé à la racine du répertoire. Il contient l'état de l'infrastructure déployée par votre projet Terraform. Encore une fois, ne pas mettre ce fichier dans votre Source Control, même si vous êtes plusieurs à modifier l'infrastructure.
 
-## Exercice 2 : Création d'un Virtual Network
+## Exercice 2 : Creation d'un Virtual Network
 
 Nous allons maintenant ajouter un Virtual Network et un Subnet dans notre resource group. Pour cela, créer un deuxième fichier `vnet.tf` et ajouter les deux ressources :
 
@@ -139,6 +140,50 @@ Pour détruire les ressouces, faites un `terraform destroy`.
 
 ## Exercice 3 : Utilisation de variables
 
-## Exercice 4 : Création de workspaces (environnements)
+Le but ici va être d'ajouter une carte réseau sur le subnet précédent, et de centraliser nos variables dans un fichier externe `.tfvars`.
 
-## Exercice 5 : Travailler en équipe sur le même projet (remote tfstate)
+Dans un souci d'organisation, nous allons créer un fichier `variables.tf` qui contiendra toutes les variables partagées par nos différents fichiers `.tf`. Par exemple la variable `location` qui est utilisée dans toutes les ressources.
+
+Toutes les variables locales à un fichier `.tf` seront déclarées dans ce fichier.
+
+Pour chaque variable déclarée, mettre en valeur par défaut la valeur actuelle utilisée dans notre projet.
+
+Déroulement de l'exercice :
+
+- Ajouter un fichier `nic.tf` et y mettre une network interface avec le snippet `tf-azurerm_network_interface`
+- Ajouter un fichier `variables.tf` et y déclarer la variable `location` avec une valeur par défaut à `West Europe`
+- Dans chacun des fichiers `.tf` (main, nic, vnet), remplacer les valeurs écrites en "dur" par des variables
+- Créer un fichier `production.tfvars` dans qui contiendra l'ensemble des valeurs des variables, au format suivant :
+
+```bash
+var_01 = "value01"
+
+var_02 = "value02"
+
+var_03 = "value03"
+```
+
+Exécuter les commandes :
+
+```bash
+terraform plan --var-file="production.tfvars"
+terraform apply --var-file="production.tfvars"
+```
+
+Une fois que vous avez validé le déploiement des ressources, faites un `terraform destroy`.
+
+## Exercice 4 : Creation de workspaces (environnements)
+
+Les workspaces permettent de gérer plusieurs environnements. Chaque workspace a un fichier `.tfstate` dédié.
+
+Le but de l'exercice est d'avoir deux workspaces : **Production** et **Recette** utilisant chacun un fichier de configuration distinct.
+
+- Créer un fichier `recette.tfvars` et copier / coller les variables du fichier `production.tfvars` en chageant leurs valeurs
+- Créer deux workspaces à l'aide de la commande `terraform workspace new <workspace_name>`
+- Déployer les environnements sur chacun des deux workspaces
+
+Pour switcher de workspace, utiliser la commande `terraform workspace select <workspace_name>`
+
+Pour voir la liste des workspaces et le workspace actif, utiliser la commande `terraform workspace list`
+
+## Exercice 5 : Travailler en equipe sur le projet (remote tfstate)
