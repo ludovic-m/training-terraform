@@ -11,18 +11,19 @@
   - [Exercice 2 : Creation d'un Virtual Network](#exercice-2--creation-dun-virtual-network)
   - [Exercice 3 : Utilisation de variables](#exercice-3--utilisation-de-variables)
   - [Exercice 4 : Creation de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
-  - [Exercice 5 : Travailler en equipe sur le projet (remote tfstate)](#exercice-5--travailler-en-equipe-sur-le-projet-remote-tfstate)
+  - [Exercice 5 : Constrution d'une (petite) infra](#exercice-5--constrution-dune-petite-infra)
+  - [Exercice 6 : Travailler en equipe sur le projet (remote tfstate)](#exercice-6--travailler-en-equipe-sur-le-projet-remote-tfstate)
 
 <!-- tocstop -->
 
 ## Prerequis
 
-* Une souscription Azure active (dont vous êtes l'administrateur)
-* Visual Studio Code
-  * Terraform extension : https://marketplace.visualstudio.com/items?itemName=mauve.terraform
-  * Terraform snipets extension : https://marketplace.visualstudio.com/items?itemName=mindginative.terraform-snippets
-* Azure CLI : https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest
-* Git (optional) : https://git-scm.com/download/win
+- Une souscription Azure active (dont vous êtes l'administrateur)
+- Visual Studio Code
+  - Terraform extension : https://marketplace.visualstudio.com/items?itemName=mauve.terraform
+  - Terraform snipets extension : https://marketplace.visualstudio.com/items?itemName=mindginative.terraform-snippets
+- Azure CLI : https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest
+- Git (optional) : https://git-scm.com/download/win
 
 ## Installation de Terraform
 
@@ -186,4 +187,77 @@ Pour switcher de workspace, utiliser la commande `terraform workspace select <wo
 
 Pour voir la liste des workspaces et le workspace actif, utiliser la commande `terraform workspace list`
 
-## Exercice 5 : Travailler en equipe sur le projet (remote tfstate)
+## Exercice 5 : Constrution d'une (petite) infra
+
+Le but est de compléter les exercices précédents pour construire l'infra suivante :
+
+![exercice6-infra](exercice6.jpg)
+
+Les machines virtuelles auront les caractéristiques suivantes :
+
+| Property | Value |
+| --- | --- |
+| vm_size | "Standard_D2s_v3" (permet d'avoir des disques Premium) |
+| OS publisher | "Canonical" |
+| OS offer | "UbuntuServer"|
+| OS sku | "14.04.2-LTS" |
+| OS version | latest |
+|managed_disk_type |"Premium_LRS" |
+
+Le seul requirement est qu'on doit pouvoir ajouter facilement une ou plusieurs autres VM sur l'environnement de production.
+
+Il est recommandé de créer les fichiers suivants :
+
+- `disk.tf`
+  - Contient le Data Disk managé de la VM (ressource `azurerm_managed_disk`). Se référer à la doc Terraform, pas de snippet pour cette ressource.
+
+```bash
+resource "azurerm_managed_disk" "datadisk_coding_dojo" {
+  name = "${var.vm_coding_dojo_name}_datadisk"
+  location = "${var.location}"
+  resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
+  storage_account_type = "Standard_LRS"
+  create_option = "Empty"
+  disk_size_gb = "1024"
+}
+```
+
+- `availability_set.tf`
+  - L'availability set doit aussi être managé pour supporter des VM avece des disques managés. Ajouter la propriété `managed = "true"`
+- `vm.tf`
+  - Vous aurez besoin d'un OS Disk et d'un Data Disk (celui que vous avez créé dans le fichier `disk.tf`)
+
+```bash
+  storage_os_disk {
+    name              = "${var.vm_coding_dojo_name}_osdisk"
+    managed_disk_type = "Premium_LRS"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+  }
+
+  storage_data_disk {
+    name              = "${var.vm_coding_dojo_name}_datadisk"
+    managed_disk_id   = "${azurerm_managed_disk.datadisk_coding_dojo.id}"
+    managed_disk_type = "Premium_LRS"
+    disk_size_gb      = "1024"
+    create_option     = "Attach"
+    lun               = 0
+  }
+```
+
+Le premier est créé directement, alors que le deuxième est une référence au disque déjà créé. Attention, les propriétés qui définissent la taille et le nom du disque doivent être les mêmes dans le fichier `disk.tf` et `vm.tf`.
+
+Pour créer plusieurs VMs, on utilisera la propriété `count`. On a après plusieurs solutions :
+
+- Soit les VM sont en IP Statique
+  - On déclare alors la liste des IPs dans le fichier de variables, et on donne comme valeur à `count` la taille du tableau qui liste ces IPs (fonction `length`).
+- Soit les VM sont en IP Dynamique
+  - Dans le fichier de variables, on rajoute une propriété qui est simplement le nombre de machine.
+
+## Exercice 6 : Travailler en equipe sur le projet (remote tfstate)
+
+Jusqu'à présent, le fichier `.tfstate` enregistrant l'état de la plateforme est stocké localement. Cela devient un problème quand plusieurs personnes travaillent sur l'infrastructure.
+
+Terraform permet de stocker le `.tfstate` en remote, afin de pouvoir le partager avec le reste de l'équipe, et que chacun puisse le lock lors d'une modification de l'infrastructure.
+
+Sur Azure, Terraform supporte de le stocker dans un `Storage Account > Blob > Container`.

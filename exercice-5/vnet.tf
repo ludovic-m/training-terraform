@@ -31,4 +31,5 @@ resource "azurerm_subnet" "subnet_coding_dojo" {
   resource_group_name  = "${azurerm_resource_group.rg_coding_dojo.name}"
   virtual_network_name = "${azurerm_virtual_network.vnet_coding_dojo.name}"
   address_prefix       = "${var.subnet_address_prefix}"
+  network_security_group_id = "${azurerm_network_security_group.nsg_subnet_coding_dojo.id}"
 }
