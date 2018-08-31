@@ -250,6 +250,11 @@ resource "azurerm_managed_disk" "datadisk_coding_dojo" {
 
 Le premier est créé directement, alors que le deuxième est une référence au disque déjà créé. Attention, les propriétés qui définissent la taille et le nom du disque doivent être les mêmes dans le fichier `disk.tf` et `vm.tf`.
 
+Quelques points à noter :
+- Le hostname doit être écrit avec des caractères alphanumériques
+- Le login de la VM ne doit pas être 'admin' (il y a une liste de login interdits)
+- Le password de la VM doit faire au moins 12 caractèresn avec (probablement) des caractères spéciaux
+
 Pour créer plusieurs VMs, on utilisera la propriété `count`. On a après plusieurs solutions :
 
 - Soit les VM sont en IP Statique
