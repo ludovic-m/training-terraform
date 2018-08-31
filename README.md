@@ -214,7 +214,7 @@ Il est recommandé de créer les fichiers suivants :
 
 ```bash
 resource "azurerm_managed_disk" "datadisk_coding_dojo" {
-  name = "${var.vm_coding_dojo_name}_datadisk"
+  name = "datadisk"
   location = "${var.location}"
   resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
   storage_account_type = "Standard_LRS"
