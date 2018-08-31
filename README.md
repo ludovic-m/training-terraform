@@ -224,6 +224,8 @@ resource "azurerm_managed_disk" "datadisk_coding_dojo" {
 
 - `availability_set.tf`
   - L'availability set doit aussi être managé pour supporter des VM avece des disques managés. Ajouter la propriété `managed = "true"`
+- `nsg.tf`
+  - Network security group pour le subnet
 - `vm.tf`
   - Vous aurez besoin d'un OS Disk et d'un Data Disk (celui que vous avez créé dans le fichier `disk.tf`)
 
