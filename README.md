@@ -24,6 +24,7 @@
   - Terraform snipets extension : https://marketplace.visualstudio.com/items?itemName=mindginative.terraform-snippets
 - Azure CLI : https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest
 - Git (optional) : https://git-scm.com/download/win
+- Documentation Terraform pour Azure : <a href="https://www.terraform.io/docs/providers/azurerm/" target="_blank">https://www.terraform.io/docs/providers/azurerm/ </a>
 
 ## Installation de Terraform
 
