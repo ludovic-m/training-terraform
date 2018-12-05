@@ -1,11 +1,3 @@
-variable "vnet_coding_dojo_name" {
-  default = "vnet_coding_dojo"
-}
-
-variable "subnet_coding_dojo_name" {
-  default = "subnet_coding_dojo"
-}
-
 variable "vnet_address_space" {
   default = ["10.0.0.0/16"]
 }
@@ -19,7 +11,7 @@ variable "subnet_address_prefix" {
 }
 
 resource "azurerm_virtual_network" "vnet_coding_dojo" {
-  name                = "${var.vnet_coding_dojo_name}"
+  name                = "vnet_coding_dojo"
   location            = "${var.location}"
   resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
   address_space       = "${var.vnet_address_space}"
@@ -27,7 +19,7 @@ resource "azurerm_virtual_network" "vnet_coding_dojo" {
 }
 
 resource "azurerm_subnet" "subnet_coding_dojo" {
-  name                 = "${var.subnet_coding_dojo_name}"
+  name                 = "subnet_coding_dojo"
   resource_group_name  = "${azurerm_resource_group.rg_coding_dojo.name}"
   virtual_network_name = "${azurerm_virtual_network.vnet_coding_dojo.name}"
   address_prefix       = "${var.subnet_address_prefix}"
