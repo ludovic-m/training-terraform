@@ -264,7 +264,7 @@ Pour créer plusieurs VMs, on utilisera la propriété `count`. On a après plus
 
 ## Exercice 6 : Travailler en equipe sur le projet (remote tfstate)
 
-Jusqu'à présent, le fichier `.tfstate` enregistrant l'état de la plateforme est stocké localement. Cela devient un problème quand plusieurs personnes travaillent sur l'infrastructure.
+Jusqu'à présent, le fichier `.tfstate` enregistrant l'état de la plateforme est stocké localement. Cela devient un problème quand plusieurs personnes travaillent sur l'infrastructure ou si l'infrastructure est gérée dans un pipeline de CI/CD (qui utilise en général un workspace temporaire pour s'exécuter).
 
 Terraform permet de stocker le `.tfstate` en remote, afin de pouvoir le partager avec le reste de l'équipe, et que chacun puisse le lock lors d'une modification de l'infrastructure.
 
