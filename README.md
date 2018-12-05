@@ -251,6 +251,7 @@ resource "azurerm_managed_disk" "datadisk_coding_dojo" {
 Le premier est créé directement, alors que le deuxième est une référence au disque déjà créé. Attention, les propriétés qui définissent la taille et le nom du disque doivent être les mêmes dans le fichier `disk.tf` et `vm.tf`.
 
 Quelques points à noter :
+
 - Le hostname doit être écrit avec des caractères alphanumériques
 - Le login de la VM ne doit pas être 'admin' (il y a une liste de login interdits)
 - Le password de la VM doit faire au moins 12 caractèresn avec (probablement) des caractères spéciaux
@@ -268,4 +269,59 @@ Jusqu'à présent, le fichier `.tfstate` enregistrant l'état de la plateforme e
 
 Terraform permet de stocker le `.tfstate` en remote, afin de pouvoir le partager avec le reste de l'équipe, et que chacun puisse le lock lors d'une modification de l'infrastructure.
 
+On profitera de cet exercice pour s'authentifier, non plus avec l'Azure CLI, mais avec une App Azure AD.
+
 Sur Azure, Terraform supporte de le stocker dans un `Storage Account > Blob > Container`.
+
+Côté Azure :
+
+- Créer une App dans l'Azure AD de votre souscription
+- Générer un client secret
+- Vous aurez besoin du tenantId, applicationId, clientSecret, et subscriptionId
+- Donner des droits de contributeurs à l'App sur la souscription
+- Créer un Blob Container dans un Storage Account
+
+Côté Terraform :
+
+Modifiez le `main.tf` pour ajouter le backend et l'authentification via une App Azure, et ajoutez les variables manquantes dans le `variables.tf`
+
+```bash
+provider "azurerm" {
+  subscription_id = "${var.subscription_id}"
+  client_id       = "${var.client_id}"
+  client_secret   = "${var.client_secret}"
+  tenant_id       = "${var.tenant_id}"
+}
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "<resource group name>"
+    storage_account_name = "<storage account name>"
+    container_name       = "<container name>"
+    key                  = "<key>"
+  }
+}
+```
+
+- Créer un fichier `backend.secrets.tfvars` (infos de connexion au storage account) et un fichier `dojo.secrets.tfvars` (infos de connexion à la souscription Azure)
+- Remplissez avec les valeurs des variables
+
+D'après la documentation Terraform, le fichier de configuration du backend doit avoir les valeurs de variables sous la forme :
+
+```bash
+arm_subscription_id = "subscription_id"
+
+arm_client_id = "client_id"
+
+arm_client_secret = "client_secret"
+
+arm_tenant_id = "tenant_id"
+```
+
+Initialisez le backend pour prendre en compte les modifications. Si vous avez une erreur, supprimez le répertoire `.terraform` qui contient l'ancien fichier `.tfstate`
+
+```bash
+terraform init --backend-config="backend.secrets.tfvars" --var-file="dojo.secrets.tfvars"
+```
+
+- Recréer les deux workspaces `prod` et `rec` et déployez l'infrastructure en recette.
