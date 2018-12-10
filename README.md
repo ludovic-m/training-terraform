@@ -13,6 +13,7 @@
   - [Exercice 4 : Creation de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
   - [Exercice 5 : Constrution d'une (petite) infra](#exercice-5--constrution-dune-petite-infra)
   - [Exercice 6 : Travailler en equipe sur le projet (remote tfstate)](#exercice-6--travailler-en-equipe-sur-le-projet-remote-tfstate)
+  - [Exercice 7](#exercice-7)
 
 <!-- tocstop -->
 
@@ -325,3 +326,19 @@ terraform init --backend-config="backend.secrets.tfvars" --var-file="dojo.secret
 ```
 
 - Recréer les deux workspaces `prod` et `rec` et déployez l'infrastructure en recette.
+
+## Exercice 7
+
+- Créer un répo GIT sur Azure DevOps
+- Initialiser le répertoire local en répository Git et configurer la branche remote/origin comme étant le répo que vous avez créé sur Azure DevOps
+
+```bash
+git init
+git remote add origin <repo_url>
+git add .
+git commit -am "Init"
+git push -u origin master
+```
+
+- Installer l'extension `Terraform` de Peter Groenewegen (Xpirit)
+- Créer un nouveau build et utilisez les étapes Terraform pour sélectionner le workspace, puis appliquer les changements
