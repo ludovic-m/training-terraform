@@ -59,13 +59,13 @@ Un projet terraform est constitué d'un ensemble de fichiers `*.tf`. Les fichier
 Dans un répertoire vide, créer un premier fichier `main.tf`
 
 ```bash
-provider "azurerm" { 
+provider "azurerm" { }
 
 # Snippet tf-azurerm_resource_group
 resource "azurerm_resource_group" "rg_coding_dojo" {
    name = "rg_coding_dojo"
    location = "West Europe"
-}}
+}
 ```
 
 * La première ligne indique à Terraform quel provider utiliser
