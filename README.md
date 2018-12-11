@@ -342,3 +342,4 @@ git push -u origin master
 
 - Installer l'extension `Terraform` de Peter Groenewegen (Xpirit)
 - Créer un nouveau build et utilisez les étapes Terraform pour sélectionner le workspace, puis appliquer les changements
+- N'oubliez pas de renseigner les variables d'environnement en les préfixant avec TF_VAR_<nom_variable> (attention, il faut que la variable soit en majuscule)
