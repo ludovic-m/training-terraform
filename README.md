@@ -1,15 +1,15 @@
-# Coding Dojo Terraform
+# Terraform Quick Start on Azure
 
 <!-- toc -->
 
-- [Coding Dojo Terraform](#coding-dojo-terraform)
-  - [Prerequis](#prerequis)
-  - [Installation de Terraform](#installation-de-terraform)
-    - [Installation manuelle](#installation-manuelle)
-    - [Installation via Chocolatey](#installation-via-chocolatey)
-  - [Exercice 1 : Initialisation de Terraform et creation d'un resource group](#exercice-1--initialisation-de-terraform-et-creation-dun-resource-group)
-  - [Exercice 2 : Creation d'un Virtual Network](#exercice-2--creation-dun-virtual-network)
-  - [Exercice 3 : Utilisation de variables](#exercice-3--utilisation-de-variables)
+- [Terraform Quick Start on Azure](#terraform-quick-start-on-azure)
+  - [Prerequisites](#prerequisites)
+  - [Terraform install](#terraform-install)
+    - [Manual install](#manual-install)
+    - [Install using Chocolatey](#install-using-chocolatey)
+  - [Exercise 1 : Terraform initialization and creation of a resourge group](#exercise-1--terraform-initialization-and-creation-of-a-resourge-group)
+  - [Exercise 2 : Creation of a Virtual Network](#exercise-2--creation-of-a-virtual-network)
+  - [Exercice 3 : Variables and functions](#exercice-3--variables-and-functions)
   - [Exercice 4 : Creation de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
   - [Exercice 5 : Constrution d'une (petite) infra](#exercice-5--constrution-dune-petite-infra)
   - [Exercice 6 : Travailler en equipe sur le projet (remote tfstate)](#exercice-6--travailler-en-equipe-sur-le-projet-remote-tfstate)
@@ -17,146 +17,146 @@
 
 <!-- tocstop -->
 
-## Prerequis
+## Prerequisites
 
-- Une souscription Azure active (dont vous êtes l'administrateur)
+- An active Azure subscription (with administrator privileges)
 - Visual Studio Code
-  - Terraform extension : https://marketplace.visualstudio.com/items?itemName=mauve.terraform
-  - Terraform snipets extension : https://marketplace.visualstudio.com/items?itemName=mindginative.terraform-snippets
-- Azure CLI : https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest
-- Git (optional) : https://git-scm.com/download/win
-- Documentation Terraform pour Azure : https://www.terraform.io/docs/providers/azurerm/
+  - Terraform extension : <https://marketplace.visualstudio.com/items?itemName=mauve.terraform>
+    - Enable support for 0.12 language : <https://medium.com/@gmusumeci/how-to-install-update-enable-and-disable-language-server-for-terraform-extension-in-visual-116e73f58722>
+  - Terraform snipets extension : <https://marketplace.visualstudio.com/items?itemName=mindginative.terraform-snippets> (extension outdated)
+- Azure CLI : <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest>
+- Git (optional) : <https://git-scm.com/download/win>
+- Terraform documentation for Azure : <https://www.terraform.io/docs/providers/azurerm/>
 
-## Installation de Terraform
+## Terraform install
 
-Vous pouvez installer Terraform de deux façons
+### Manual install
 
-### Installation manuelle
+- Download the package on the official website : <https://www.terraform.io/downloads.html>
+- Update the PATH to make the terraform binary available : <https://stackoverflow.com/questions/1618280/where-can-i-set-path-to-make-exe-on-windows>
 
-- Télécharger le package sur le site de Terraform : https://www.terraform.io/downloads.html
-- Mettre à jour le PATH pour rendre le binaire Terraform accessible : https://stackoverflow.com/questions/1618280/where-can-i-set-path-to-make-exe-on-windows
+### Install using Chocolatey
 
-### Installation via Chocolatey
+Chocolatey is a Windows Package Manager. It can be used to install Terraform.
 
-Chocolatey est un package manager Windows. Il permet également d'installer Terraform. La seule différence avec l'installation manuelle est qu'il ajoute automatiquement Terraform dans le PATH. Il permet également de le mettre à jour facilement.
-
-Si vous n'avez pas Chocolatey, vous pouvez l'installer via PowerShell en une ligne de commande : https://chocolatey.org/install#install-with-powershellexe
+You can install Chocolatey with PowerShell using this command line : <https://chocolatey.org/install#install-with-powershellexe>
 
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 ```
 
-Vous pouvez ensuite installer Terraform
+Then you can install Terraform
 
 ```bash
 choco install terraform
 ```
 
-## Exercice 1 : Initialisation de Terraform et creation d'un resource group
+## Exercise 1 : Terraform initialization and creation of a resourge group
 
-Un projet terraform est constitué d'un ensemble de fichiers `*.tf`. Les fichiers Terraform sont écrits en HCL (HashiCorp Configuration Language).
+A terraform project is made of a collection of `*.tf` files. Terraform files are written using HCL (HashiCorp Configuration Language)
 
-Dans un répertoire vide, créer un premier fichier `main.tf`
+Create an empty folder, then create the file `main.tf`
 
 ```bash
 provider "azurerm" { }
 
 # Snippet tf-azurerm_resource_group
-resource "azurerm_resource_group" "rg_coding_dojo" {
-   name = "rg_coding_dojo"
+resource "azurerm_resource_group" "rg_training" {
+   name = "rg-training"
    location = "West Europe"
 }
 ```
 
-* La première ligne indique à Terraform quel provider utiliser
-* Le deuxième bloc va créer un Resource Group `rg_coding_dojo`
+- The first line indicates which Terraform provider is to be used
+- The second block will create a resource group named `rg-training`
 
-Dans un terminal, aller dans le répertoire dans lequel vous avez créé ce fichier.
+Open a terminal, and go to the directory you just created.
 
-La première étape est d'initialiser le projet Terraform. Taper la commande suivante :
+The first step is to initialize the Terraform project. Run the following command :
 
 ```bash
 terraform init
 ```
 
-Terraform va télécharger la dernière version disponible du provider Azure, et va créer un répertoire `.terraform` dans lequel seront stockés les artefacts nécessaires au fonctionnement de Terraform. Ce dossier doit être dans le `.gitignore` si vous mettez vos sources sur Git.
+Terraform will download the latest vestion of the Azure provider, and create a `.terraform` folder where all the artefacts needed to run Terraform will be stored. This folder must be present in the `.gitignore` file if you want to use Git.
 
-Authentifiez vous sur votre souscription Azure en utilisant la CLI Azure (cela ne fonctionnera pas si vous vous authentifiez avec une commande PowerShell)
+Authenticate to your Azure Subscription using the Azure CLI (this won't work with a PowerShell command)
 
 ```bash
 az login
 
-# Si vous avez plusieurs souscriptions associées à votre compte, vous pouvez en sélectionner une en particulier
+# If you have more than one subscription associated with your account, select the one you want to use
 az account set --subscription <subscription_id>
 ```
 
-> Il y a plusieurs façons de s'authentifier sur Azure pour faire fonctionner Terraform. La façon ci-dessus est juste la plus rapide, mais en situation réelle, il faudra préférer une authentification à l'aide d'une App déclarée dans Azure AD
+> There's another way to authenticate to Azure to run your Terraform project, using an App. It's the recommended way to do in a real life situation, but the one we use is the fastest and is more than ok for a training.
 
-Après être identifié sur Azure, taper la commande :
+Once you're authenticated on Azure, run the following command :
 
 ```bash
 terraform plan
 ```
 
-La commande ne va rien faire sur Azure, mais va indiquer en output les opérations qui seront réalisées. C'est une sorte de dry run. Vous devriez voir qu'un resource group va être créé, et qu'aucune resource ne va être mise à jour ou détruite.
+This command won't do anything on Azure, but it will show you what's going to be done, like a dry run. You should see that one resource group will be created, and no resource will be updated or deleted.
 
-Pour lancer l'opération, tapez la commande :
+In order to apply the modifications on Azure, run the command :
 
 ```bash
 terraform apply
 
-# Tapez yes pour confirmer la commande
+# Type yes to confirm
 ```
 
-Avec la commande `az group list` ou bien directement depuis le portail Azure, vous devez maintenant voir le resource gorup `rg_coding_dojo`
+Using the command `az group list` or directly in the Azure Portal, you should now see the resource group `rg-training`
 
-Un fichier `terraform.tfstate` a été créé à la racine du répertoire. Il contient l'état de l'infrastructure déployée par votre projet Terraform. Encore une fois, ne pas mettre ce fichier dans votre Source Control, même si vous êtes plusieurs à modifier l'infrastructure.
+A `terraform.tfstate` file has been created at the root of the folder. It contains the state of your infrastructure deployed with your Terraform project. One again, don't put this file in your Source Control, even if you are more than one working on the project. You will see later how to store it to work in a distributed way.
 
-## Exercice 2 : Creation d'un Virtual Network
+## Exercise 2 : Creation of a Virtual Network
 
-Nous allons maintenant ajouter un Virtual Network et un Subnet dans notre resource group. Pour cela, créer un deuxième fichier `vnet.tf` et ajouter les deux ressources :
+We will add a Virtual Network and a Subnet in our resource group. Create a second file named `vnet.tf` and add the following resources :
 
 ```bash
 # Snippet : tf-azurerm_virtual_network
-resource "azurerm_virtual_network" "vnet_coding_dojo" {
-   name = "vnet_coding_dojo"
-   location = "West Europe"
-   resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
-   address_space = ["10.0.0.0/16"]
-   dns_servers = ["10.0.0.4"]
+resource "azurerm_virtual_network" "vnet_training" {
+  name                = "vnet-training"
+  location            = "West Europe"
+  resource_group_name = azurerm_resource_group.rg_training.name
+  address_space       = ["10.0.0.0/16"]
 }
 
 # Snippet : tf-azurerm_subnet
 resource "azurerm_subnet" "subnet_coding_dojo" {
-   name = "subnet_coding_dojo"
-   resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
-   virtual_network_name = "${azurerm_virtual_network.vnet_coding_dojo.name}"
-   address_prefix = "10.0.1.0/24"
+  name                 = "subnet_coding_dojo"
+  resource_group_name = azurerm_resource_group.rg_training.name
+  virtual_network_name = azurerm_virtual_network.vnet_training.name
+  address_prefix       = "10.0.1.0/24"
 }
 ```
 
-Exécutez la commande `terraform plan`
+Run the command `terraform plan`
 
-Le resource group étant déjà créé, Terraform indique seulement deux ressources à créer. Faites un `terraform apply` pour créer les ressources.
+Since the resource group is already there, Terraform will only create 2 additional resources.
 
-Pour détruire les ressouces, faites un `terraform destroy`.
+Run `terraform apply`
 
-## Exercice 3 : Utilisation de variables
+Once you've checked that all the resources have been created correctly, destroy everything using the command `terraform destroy`.
 
-Le but ici va être d'ajouter une carte réseau sur le subnet précédent, et de centraliser nos variables dans un fichier externe `.tfvars`.
+## Exercice 3 : Variables and functions
 
-Dans un souci d'organisation, nous allons créer un fichier `variables.tf` qui contiendra toutes les variables partagées par nos différents fichiers `.tf`. Par exemple la variable `location` qui est utilisée dans toutes les ressources.
+We will had a Network Interface in our subnet, and introduce the use of variables and built-in functions.
 
-Toutes les variables locales à un fichier `.tf` seront déclarées dans ce fichier.
+We will create a file named `variables.tf` where we will declare all the variables we're going to use, with a default value. Then we will create a file named `values.tfvars` which will contain the vales of our variables.
 
-Pour chaque variable déclarée, mettre en valeur par défaut la valeur actuelle utilisée dans notre projet.
+For example, we will declare the `location` variable, set the value to `West Europe`, and use it for every resources we have.
 
-Déroulement de l'exercice :
+For each variable, you can set a default value (which can be overriden later).
 
-- Ajouter un fichier `nic.tf` et y mettre une network interface avec le snippet `tf-azurerm_network_interface`
-- Ajouter un fichier `variables.tf` et y déclarer la variable `location` avec une valeur par défaut à `West Europe`
-- Dans chacun des fichiers `.tf` (main, nic, vnet), remplacer les valeurs écrites en "dur" par des variables
-- Créer un fichier `production.tfvars` dans qui contiendra l'ensemble des valeurs des variables, au format suivant :
+Perform the following tasks :
+
+- Add a `nic.tf` file and add a Network Interface using the snippet `tf-azurerm_network_interface`
+- Add a `variables.tf` file and decalre the `location` variable with a default value set to `West Europe`
+- In each `.tf` file (main, nic, vnet), replace hardcoded values with variables
+- Create a file `values.tfvars` which will contain values for the variables, using the following syntax :
 
 ```bash
 var_01 = "value01"
@@ -166,14 +166,16 @@ var_02 = "value02"
 var_03 = "value03"
 ```
 
-Exécuter les commandes :
+Run the commands :
 
 ```bash
-terraform plan --var-file="production.tfvars"
-terraform apply --var-file="production.tfvars"
+terraform plan --var-file="values.tfvars"
+terraform apply --var-file="values.tfvars"
 ```
 
-Une fois que vous avez validé le déploiement des ressources, faites un `terraform destroy`.
+Once you've checked that everything is deployed correctly, run a `terraform destroy`.
+
+> Tips : Use the `variables.tf` file to declare variables that are used globally accross tf files. If a variable is only used in a single `.tf` file, like, for example, the `vnet_address_space`, declare it directly in the same `.tf` file. Doing this, you can differentiate global and local variables, even if in the end, it's the same for the Terraform engine.
 
 ## Exercice 4 : Creation de workspaces (environnements)
 

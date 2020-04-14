@@ -1,6 +1,6 @@
 provider "azurerm" {}
 
-resource "azurerm_resource_group" "rg_coding_dojo" {
-  name     = "rg_coding_dojo"
+resource "azurerm_resource_group" "rg_training" {
+  name     = "rg-training"
   location = "West Europe"
 }
