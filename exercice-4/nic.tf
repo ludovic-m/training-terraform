@@ -1,16 +1,11 @@
-variable "nic_private_ip" {
-  default = "10.0.1.4"
-}
-
-resource "azurerm_network_interface" "nic_coding_dojo" {
-  name                = "nic_${terraform.workspace}_coding_dojo"
-  resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
-  location            = "${var.location}"
+resource "azurerm_network_interface" "nic_training" {
+  name                = "nic-${terraform.workspace}-training"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg_training.name
 
   ip_configuration {
-    name                          = "nic_${terraform.workspace}_coding_dojo_ip"
-    subnet_id                     = "${azurerm_subnet.subnet_coding_dojo.id}"
-    private_ip_address            = "${var.nic_private_ip}"
-    private_ip_address_allocation = "Static"
+    name                          = "ip-config-training"
+    subnet_id                     = azurerm_subnet.subnet_training.id
+    private_ip_address_allocation = "Dynamic"
   }
 }

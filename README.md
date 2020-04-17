@@ -210,13 +210,22 @@ Every workspace has a dedicated `.tfstate` file.
 The goal of this exercise is to create two workspaces : **Production** and **Development**. For each workspace, we will create a dedicated `.tfvars` file, in order to have different values for each environment.
 
 - Create a  `dev.tfvars`, copy / paste the content of the `values.tfvars` file, and change the values.
-- Rename the `values.tfvars` in `prod.tfvars` 
-- Créer deux workspaces à l'aide de la commande `terraform workspace new <workspace_name>`
-- Déployer les environnements sur chacun des deux workspaces
+- Rename the `values.tfvars` in `prod.tfvars`
+- Create two workspaces with the command `terraform workspace new <workspace_name>`
+- Use the variable `terraform.workspace` in your resources name in order to identify each resources created within the workspace. For example, in the `main.tf` file :
 
-Pour switcher de workspace, utiliser la commande `terraform workspace select <workspace_name>`
+```bash
+resource "azurerm_resource_group" "rg_training" {
+  name     = "rg-${terraform.workspace}-training"
+  location = var.location
+}
+```
 
-Pour voir la liste des workspaces et le workspace actif, utiliser la commande `terraform workspace list`
+- Deploy the two environments on each workspaces
+
+To switch between workspaces, use the command `terraform workspace select <workspace_name>`
+
+To see the list of workspaces, and which one of them is selected, use the command `terraform workspace list`
 
 ## Exercice 5 : Constrution d'une (petite) infra
 
