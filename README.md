@@ -58,7 +58,9 @@ A terraform project is made of a collection of `*.tf` files. Terraform files are
 Create an empty folder, then create the file `main.tf`
 
 ```bash
-provider "azurerm" { }
+provider "azurerm" {
+  features {}
+ }
 
 # Snippet tf-azurerm_resource_group
 resource "azurerm_resource_group" "rg_training" {
@@ -125,8 +127,8 @@ resource "azurerm_virtual_network" "vnet_training" {
 }
 
 # Snippet : tf-azurerm_subnet
-resource "azurerm_subnet" "subnet_coding_dojo" {
-  name                 = "subnet_coding_dojo"
+resource "azurerm_subnet" "subnet_training" {
+  name                 = "subnet-training"
   resource_group_name = azurerm_resource_group.rg_training.name
   virtual_network_name = azurerm_virtual_network.vnet_training.name
   address_prefix       = "10.0.1.0/24"
@@ -143,7 +145,7 @@ Once you've checked that all the resources have been created correctly, destroy 
 
 ## Exercice 3 : Variables and functions
 
-We will had a Network Interface in our subnet, and introduce the use of variables and built-in functions.
+We will add a Network Interface in our subnet, and introduce the use of variables and built-in functions.
 
 We will create a file named `variables.tf` where we will declare all the variables we're going to use, with a default value. Then we will create a file named `values.tfvars` which will contain the vales of our variables.
 
@@ -153,8 +155,30 @@ For each variable, you can set a default value (which can be overriden later).
 
 Perform the following tasks :
 
-- Add a `nic.tf` file and add a Network Interface using the snippet `tf-azurerm_network_interface`
-- Add a `variables.tf` file and decalre the `location` variable with a default value set to `West Europe`
+- Add a `nic.tf` file and add a Network Interface using the snippet `tf-azurerm_network_interface` or the one in the official Terraform documentation
+
+```bash
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+```
+
+- Add a `variables.tf` file and declare the `location` variable with a default value set to `West Europe`
+
+```bash
+variable "location" {
+  default = "West Europe"
+}
+```
+
 - In each `.tf` file (main, nic, vnet), replace hardcoded values with variables
 - Create a file `values.tfvars` which will contain values for the variables, using the following syntax :
 
@@ -179,11 +203,14 @@ Once you've checked that everything is deployed correctly, run a `terraform dest
 
 ## Exercice 4 : Creation de workspaces (environnements)
 
-Les workspaces permettent de gérer plusieurs environnements. Chaque workspace a un fichier `.tfstate` dédié.
+Workspaces allow you yo have multiple version of the same infrastructure. It's used, for example, to create a Production environment, a Development environment, etc...
 
-Le but de l'exercice est d'avoir deux workspaces : **Production** et **Recette** utilisant chacun un fichier de configuration distinct.
+Every workspace has a dedicated `.tfstate` file.
 
-- Créer un fichier `recette.tfvars` et copier / coller les variables du fichier `production.tfvars` en chageant leurs valeurs
+The goal of this exercise is to create two workspaces : **Production** and **Development**. For each workspace, we will create a dedicated `.tfvars` file, in order to have different values for each environment.
+
+- Create a  `dev.tfvars`, copy / paste the content of the `values.tfvars` file, and change the values.
+- Rename the `values.tfvars` in `prod.tfvars` 
 - Créer deux workspaces à l'aide de la commande `terraform workspace new <workspace_name>`
 - Déployer les environnements sur chacun des deux workspaces
 
