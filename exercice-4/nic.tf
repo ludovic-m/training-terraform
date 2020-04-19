@@ -6,6 +6,7 @@ resource "azurerm_network_interface" "nic_training" {
   ip_configuration {
     name                          = "ip-config-training"
     subnet_id                     = azurerm_subnet.subnet_training.id
-    private_ip_address_allocation = "Dynamic"
+    private_ip_address_allocation = "Static"
+    private_ip_address            = cidrhost(azurerm_subnet.subnet_training.address_prefix, 10)
   }
 }

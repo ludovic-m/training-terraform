@@ -10,8 +10,11 @@
   - [Exercise 1 : Terraform initialization and creation of a resourge group](#exercise-1--terraform-initialization-and-creation-of-a-resourge-group)
   - [Exercise 2 : Creation of a Virtual Network](#exercise-2--creation-of-a-virtual-network)
   - [Exercice 3 : Variables and functions](#exercice-3--variables-and-functions)
-  - [Exercice 4 : Creation de workspaces (environnements)](#exercice-4--creation-de-workspaces-environnements)
-  - [Exercice 5 : Constrution d'une (petite) infra](#exercice-5--constrution-dune-petite-infra)
+  - [Exercice 4 : Workspaces](#exercice-4--workspaces)
+  - [Exercice 5 : Build a set of virtual machines](#exercice-5--build-a-set-of-virtual-machines)
+    - [Availability set](#availability-set)
+    - [Network Security Group](#network-security-group)
+    - [Virtual Machine](#virtual-machine)
   - [Exercice 6 : Travailler en equipe sur le projet (remote tfstate)](#exercice-6--travailler-en-equipe-sur-le-projet-remote-tfstate)
   - [Exercice 7](#exercice-7)
 
@@ -166,10 +169,13 @@ resource "azurerm_network_interface" "example" {
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.example.id
-    private_ip_address_allocation = "Dynamic"
+    private_ip_address_allocation = "Static"
+    private_ip_address            = cidrhost(azurerm_subnet.subnet_training.address_prefix, 10)
   }
 }
 ```
+
+The `cidrhost` function allows you to calculate an address using a subnet prefix.
 
 - Add a `variables.tf` file and declare the `location` variable with a default value set to `West Europe`
 
@@ -201,7 +207,7 @@ Once you've checked that everything is deployed correctly, run a `terraform dest
 
 > Tips : Use the `variables.tf` file to declare variables that are used globally accross tf files. If a variable is only used in a single `.tf` file, like, for example, the `vnet_address_space`, declare it directly in the same `.tf` file. Doing this, you can differentiate global and local variables, even if in the end, it's the same for the Terraform engine.
 
-## Exercice 4 : Creation de workspaces (environnements)
+## Exercice 4 : Workspaces
 
 Workspaces allow you yo have multiple version of the same infrastructure. It's used, for example, to create a Production environment, a Development environment, etc...
 
@@ -227,24 +233,103 @@ To switch between workspaces, use the command `terraform workspace select <works
 
 To see the list of workspaces, and which one of them is selected, use the command `terraform workspace list`
 
-## Exercice 5 : Constrution d'une (petite) infra
+## Exercice 5 : Build a set of virtual machines
 
-Le but est de compléter les exercices précédents pour construire l'infra suivante :
+The goal is to continue the previous exercise to build the following infrastructure :
 
 ![exercice6-infra](exercice6.jpg)
 
-Les machines virtuelles auront les caractéristiques suivantes :
+The virtual machines must have the following configuration :
 
 | Property | Value |
 | --- | --- |
-| vm_size | "Standard_D2s_v3" (permet d'avoir des disques Premium) |
+| vm_size | "Standard_DS2_v2" (permet d'avoir des disques Premium) |
 | OS publisher | "Canonical" |
 | OS offer | "UbuntuServer"|
 | OS sku | "14.04.2-LTS" |
 | OS version | latest |
 |managed_disk_type |"Premium_LRS" |
 
-Le seul requirement est qu'on doit pouvoir ajouter facilement une ou plusieurs autres VM sur l'environnement de production.
+You're required to make it easy to add another virtual machine later.
+
+### Availability set
+
+Create a file named `availability_set.tf` and add the resource. Set the `managed` property to true in order to be able to use managed disks later.
+
+```bash
+resource "azurerm_availability_set" "example" {
+  name                = "example-aset"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  managed             = true
+}
+```
+
+Don't forget either to put the workspace name in the name of the resource, so we don't have duplicate later.
+
+### Network Security Group
+
+Create a file named `nsg.tf` and add a network security group resource.
+
+```bash
+resource "azurerm_network_security_group" "example" {
+  name                = "acceptanceTestSecurityGroup1"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+```
+
+Add the nsg to the subnet using the `azurerm_subnet_network_security_group_association` resource
+
+```bash
+resource "azurerm_subnet_network_security_group_association" "example" {
+  subnet_id                 = azurerm_subnet.example.id
+  network_security_group_id = azurerm_network_security_group.example.id
+}
+```
+
+### Virtual Machine
+
+Create a file named `vm.tf` and add a virtual machine resource with the spec defined earlier.
+
+```bash
+resource "azurerm_virtual_machine" "main" {
+  name                  = "vm"
+  location              = azurerm_resource_group.main.location
+  resource_group_name   = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.main.id]
+  vm_size               = "Standard_DS2_v2"
+
+  delete_os_disk_on_termination = true
+
+  delete_data_disks_on_termination = true
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+  storage_os_disk {
+    name              = "myosdisk1"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+  os_profile {
+    computer_name  = "hostname"
+    admin_username = "avanade"
+  }
+  os_profile_linux_config {
+    disable_password_authentication = true
+
+    ssh_keys {
+      path     = "/home/avanade/.ssh/authorized_keys"
+      key_data = "ssh_public_key"
+    }
+  }
+}
+```
 
 Il est recommandé de créer les fichiers suivants :
 
