@@ -15,7 +15,8 @@
     - [Availability set](#availability-set)
     - [Network Security Group](#network-security-group)
     - [Virtual Machine](#virtual-machine)
-  - [Exercice 6 : Travailler en equipe sur le projet (remote tfstate)](#exercice-6--travailler-en-equipe-sur-le-projet-remote-tfstate)
+    - [Replicate Virtual Machines](#replicate-virtual-machines)
+  - [Exercice 6 : Remote Tfstate](#exercice-6--remote-tfstate)
   - [Exercice 7](#exercice-7)
 
 <!-- tocstop -->
@@ -331,83 +332,41 @@ resource "azurerm_virtual_machine" "main" {
 }
 ```
 
-Il est recommandé de créer les fichiers suivants :
+A few things to note :
 
-- `disk.tf`
-  - Contient le Data Disk managé de la VM (ressource `azurerm_managed_disk`). Se référer à la doc Terraform, pas de snippet pour cette ressource.
+- The hostname must contain only alphanumerical characters.
+- The login of the VM cannot be **admin**
 
-```bash
-resource "azurerm_managed_disk" "datadisk_coding_dojo" {
-  name = "datadisk"
-  location = "${var.location}"
-  resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
-  storage_account_type = "Standard_LRS"
-  create_option = "Empty"
-  disk_size_gb = "1024"
-}
-```
+### Replicate Virtual Machines
 
-- `availability_set.tf`
-  - L'availability set doit aussi être managé pour supporter des VM avece des disques managés. Ajouter la propriété `managed = "true"`
-- `nsg.tf`
-  - Network security group pour le subnet
-- `vm.tf`
-  - Vous aurez besoin d'un OS Disk et d'un Data Disk (celui que vous avez créé dans le fichier `disk.tf`)
+Now that you have a virtual machine, use the `count` keyword to duplicate it.
 
-```bash
-  storage_os_disk {
-    name              = "${var.vm_coding_dojo_name}_osdisk"
-    managed_disk_type = "Premium_LRS"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-  }
+- Declare a variable to define the number of virtual machines you need.
+- Use the variable in each resource that needs to be duplicated, and the `count.index` property to iterate
+- In your virtual machine resource, you will have to reference a nic. Use the array syntax with the `count.index` property
 
-  storage_data_disk {
-    name              = "${var.vm_coding_dojo_name}_datadisk"
-    managed_disk_id   = "${azurerm_managed_disk.datadisk_coding_dojo.id}"
-    managed_disk_type = "Premium_LRS"
-    disk_size_gb      = "1024"
-    create_option     = "Attach"
-    lun               = 0
-  }
-```
+At the end of the exercise, delete the infrastructure on both workspaces.
 
-Le premier est créé directement, alors que le deuxième est une référence au disque déjà créé. Attention, les propriétés qui définissent la taille et le nom du disque doivent être les mêmes dans le fichier `disk.tf` et `vm.tf`.
+## Exercice 6 : Remote Tfstate
 
-Quelques points à noter :
+Until now, the `.tfstate` file, which save the state of the infrastructure, is stored locally. This is a problem when you're not the only one working on the Terraform project, or when you use a CI / CD pipeline to deploy your infrastructure (executed in a stateless agent).
 
-- Le hostname doit être écrit avec des caractères alphanumériques
-- Le login de la VM ne doit pas être 'admin' (il y a une liste de login interdits)
-- Le password de la VM doit faire au moins 12 caractèresn avec (probablement) des caractères spéciaux
+Terraform allow you to store the `.tfstate` remotely, so you can share it with the rest of your team.
 
-Pour créer plusieurs VMs, on utilisera la propriété `count`. On a après plusieurs solutions :
+During the exercise, we will also switch from Azure CLI authentication to using an Azure AD App.
 
-- Soit les VM sont en IP Statique
-  - On déclare alors la liste des IPs dans le fichier de variables, et on donne comme valeur à `count` la taille du tableau qui liste ces IPs (fonction `length`).
-- Soit les VM sont en IP Dynamique
-  - Dans le fichier de variables, on rajoute une propriété qui est simplement le nombre de machine.
+On Azure, Terraform supports to store the `.tfstate` in a Blob Storage.
 
-## Exercice 6 : Travailler en equipe sur le projet (remote tfstate)
+On the Azure side, you have to :
 
-Jusqu'à présent, le fichier `.tfstate` enregistrant l'état de la plateforme est stocké localement. Cela devient un problème quand plusieurs personnes travaillent sur l'infrastructure ou si l'infrastructure est gérée dans un pipeline de CI/CD (qui utilise en général un workspace temporaire pour s'exécuter).
+- Create an App in your Azure AD tenant
+- Generate a client secret
+- Give this App Contributor or Owner permissions on your subscription
+- Create a Blob Container in a Storage Account (manually, without Terraform)
 
-Terraform permet de stocker le `.tfstate` en remote, afin de pouvoir le partager avec le reste de l'équipe, et que chacun puisse le lock lors d'une modification de l'infrastructure.
+On the Terraform side, you have to :
 
-On profitera de cet exercice pour s'authentifier, non plus avec l'Azure CLI, mais avec une App Azure AD.
-
-Sur Azure, Terraform supporte de le stocker dans un `Storage Account > Blob > Container`.
-
-Côté Azure :
-
-- Créer une App dans l'Azure AD de votre souscription
-- Générer un client secret
-- Vous aurez besoin du tenantId, applicationId, clientSecret, et subscriptionId
-- Donner des droits de contributeurs à l'App sur la souscription
-- Créer un Blob Container dans un Storage Account
-
-Côté Terraform :
-
-Modifiez le `main.tf` pour ajouter le backend et l'authentification via une App Azure, et ajoutez les variables manquantes dans le `variables.tf`
+- Modify the `main.tf` file to add the backend config (which host the `.tfstate`), modify the provider bloc to enable the Azure App authentication, and add the missing variables in the `variables.tf` file
 
 ```bash
 provider "azurerm" {
@@ -427,28 +386,27 @@ terraform {
 }
 ```
 
-- Créer un fichier `backend.secrets.tfvars` (infos de connexion au storage account) et un fichier `dojo.secrets.tfvars` (infos de connexion à la souscription Azure)
-- Remplissez avec les valeurs des variables
+- Create a `backend.secrets.tfvars` file, containing the infos to connect to the storage account, and a file `auth.secrets.tfvars` containing the infos to authenticate your Azure subscription
 
-D'après la documentation Terraform, le fichier de configuration du backend doit avoir les valeurs de variables sous la forme :
-
-```bash
-arm_subscription_id = "subscription_id"
-
-arm_client_id = "client_id"
-
-arm_client_secret = "client_secret"
-
-arm_tenant_id = "tenant_id"
-```
-
-Initialisez le backend pour prendre en compte les modifications. Si vous avez une erreur, supprimez le répertoire `.terraform` qui contient l'ancien fichier `.tfstate`
+According to the Terraform documentation, the config file for the backend must contains the following values :
 
 ```bash
-terraform init --backend-config="backend.secrets.tfvars" --var-file="dojo.secrets.tfvars"
+subscription_id = "subscription_id"
+
+client_id = "client_id"
+
+client_secret = "client_secret"
+
+tenant_id = "tenant_id"
 ```
 
-- Recréer les deux workspaces `prod` et `rec` et déployez l'infrastructure en recette.
+Initialize the backend to take into account the modifications. If you have an error, delete the `.terraform` folder and try again.
+
+```bash
+terraform init --backend-config="backend.secrets.tfvars"
+```
+
+Redeploy the whole infrastructure.
 
 ## Exercice 7
 
