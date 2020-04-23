@@ -17,7 +17,6 @@
     - [Virtual Machine](#virtual-machine)
     - [Replicate Virtual Machines](#replicate-virtual-machines)
   - [Exercice 6 : Remote Tfstate](#exercice-6--remote-tfstate)
-  - [Exercice 7](#exercice-7)
 
 <!-- tocstop -->
 
@@ -407,20 +406,3 @@ terraform init --backend-config="backend.secrets.tfvars"
 ```
 
 Redeploy the whole infrastructure.
-
-## Exercice 7
-
-- Créer un répo GIT sur Azure DevOps
-- Initialiser le répertoire local en répository Git et configurer la branche remote/origin comme étant le répo que vous avez créé sur Azure DevOps
-
-```bash
-git init
-git remote add origin <repo_url>
-git add .
-git commit -am "Init"
-git push -u origin master
-```
-
-- Installer l'extension `Terraform` de Peter Groenewegen (Xpirit)
-- Créer un nouveau build et utilisez les étapes Terraform pour sélectionner le workspace, puis appliquer les changements
-- N'oubliez pas de renseigner les variables d'environnement en les préfixant avec TF_VAR_<nom_variable> (attention, il faut que la variable soit en majuscule)
