@@ -1,6 +1,6 @@
-resource "azurerm_availability_set" "as_coding_dojo" {
-  name                = "as_${terraform.workspace}_coding_dojo"
-  resource_group_name = "${azurerm_resource_group.rg_coding_dojo.name}"
-  location            = "${var.location}"
-  managed             = "true"
+resource "azurerm_availability_set" "as_training" {
+  name                = "as-${terraform.workspace}-training"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg_training.name
+  managed             = true
 }
