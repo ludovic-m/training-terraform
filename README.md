@@ -4,9 +4,10 @@
 
 - [Terraform Quick Start on Azure](#terraform-quick-start-on-azure)
   - [Prerequisites](#prerequisites)
+  - [What is Terraform ?](#what-is-terraform-)
   - [Terraform install](#terraform-install)
     - [Manual install](#manual-install)
-    - [Install using Chocolatey](#install-using-chocolatey)
+    - [Install using Chocolatey (recommended)](#install-using-chocolatey-recommended)
   - [Exercise 1 : Terraform initialization and creation of a resourge group](#exercise-1--terraform-initialization-and-creation-of-a-resourge-group)
   - [Exercise 2 : Creation of a Virtual Network](#exercise-2--creation-of-a-virtual-network)
   - [Exercice 3 : Variables and functions](#exercice-3--variables-and-functions)
@@ -31,6 +32,12 @@
 - Git (optional) : <https://git-scm.com/download/win>
 - Terraform documentation for Azure : <https://www.terraform.io/docs/providers/azurerm/>
 
+## What is Terraform ?
+
+"*Terraform is a tool for building, changing, and versioning infrastructure safely and efficiently.*" (cf documentation).
+
+ It's just a CLI ! You just have to describe your infrastructure in one or many files using HCL (HashiCorp Configuration Language), and use the CLI to build it, change it, etc...
+
 ## Terraform install
 
 ### Manual install
@@ -38,7 +45,7 @@
 - Download the package on the official website : <https://www.terraform.io/downloads.html>
 - Update the PATH to make the terraform binary available : <https://stackoverflow.com/questions/1618280/where-can-i-set-path-to-make-exe-on-windows>
 
-### Install using Chocolatey
+### Install using Chocolatey (recommended)
 
 Chocolatey is a Windows Package Manager. It can be used to install Terraform.
 
