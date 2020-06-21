@@ -17,7 +17,13 @@
     - [Network Security Group](#network-security-group)
     - [Virtual Machine](#virtual-machine)
     - [Replicate Virtual Machines](#replicate-virtual-machines)
+    - [Optional : Add an Azure Load Balancer](#optional--add-an-azure-load-balancer)
   - [Exercice 6 : Remote Tfstate](#exercice-6--remote-tfstate)
+  - [Exercice 7 : CI / CD with Azure DevOps](#exercice-7--ci--cd-with-azure-devops)
+    - [Create a git repository](#create-a-git-repository)
+    - [Deploy the prod infrastructure through a pipeline](#deploy-the-prod-infrastructure-through-a-pipeline)
+      - [Prerequisite : Create a variable group](#prerequisite--create-a-variable-group)
+      - [Option 1 : Use a Terraform extension](#option-1--use-a-terraform-extension)
 
 <!-- tocstop -->
 
@@ -152,6 +158,8 @@ Since the resource group is already there, Terraform will only create 2 addition
 Run `terraform apply`
 
 Once you've checked that all the resources have been created correctly, destroy everything using the command `terraform destroy`.
+
+> Optional : Add a tag for the virtual network (for example 'environment = "prod"')
 
 ## Exercice 3 : Variables and functions
 
@@ -353,6 +361,10 @@ Now that you have a virtual machine, use the `count` keyword to duplicate it.
 
 At the end of the exercise, delete the infrastructure on both workspaces.
 
+### Optional : Add an Azure Load Balancer
+
+Add a public Azure Load Balancer with a public IP, and a rule to load balance TCP traffic on the port 443 of your virtual machines. Don't forget to open the port 443 on your NSG.
+
 ## Exercice 6 : Remote Tfstate
 
 Until now, the `.tfstate` file, which save the state of the infrastructure, is stored locally. This is a problem when you're not the only one working on the Terraform project, or when you use a CI / CD pipeline to deploy your infrastructure (executed in a stateless agent).
@@ -413,3 +425,65 @@ terraform init --backend-config="backend.secrets.tfvars"
 ```
 
 Redeploy the whole infrastructure.
+
+## Exercice 7 : CI / CD with Azure DevOps
+
+The goal of this exercise is to run the build of your infrastructure from Azure DevOps.
+
+### Create a git repository
+
+Create a `.gitignore` file at the root of your working folder with the following content
+
+```bash
+**/.terraform/*
+**/secrets/*
+**/backend/*
+*.secrets.*
+*.secrets
+*.tfstate
+*.tfstate.*
+```
+
+In your Azure DevOps project, create an empty projet, then push your code in the (default) repository.
+
+```bash
+git init
+git add .
+git commit -am "Initial Commit"
+git remote add origin <your git repository>
+git push -u origin --all
+```
+
+### Deploy the prod infrastructure through a pipeline
+
+There's a lot of different ways to deploy a Terraform infrastructure in a pipeline.
+
+The first one is the fastest and easiest one. We'll use a Terraform extension from the Azure DevOps Marketplace. However, this is not the safest way.
+
+The second one will use Job Containers. We'll use our own container to run the Terraform commands.
+
+#### Prerequisite : Create a variable group
+
+Since we don't want to commit any secrets (no, we don't) or configuration values in our git repository, we'll use environment variable.
+
+Terraform look at all the environment variables starting with `TF_VAR_` in order set variables. For example, if you have a variable named `my_variable`, Terraform will look for an environment variable named `TF_VAR_my_variable` to set the value.
+
+You can either create variables at the pipeline level, or create variables across pipelines using variable groups. Since we'll create two pipelines, we'll use a variable group. Create one and set the value for the following variables:
+
+```bash
+client_id
+client_secret
+tenant_id
+subscription_id
+```
+
+#### Option 1 : Use a Terraform extension
+
+There's a bunch of Terraform extensions available in the Azure DevOps marketplace. The best one at the moment (June 2020) seems to be the one written by `Charles Zipp` : <https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform>
+
+Install the extension, then create a new pipeline
+
+
+- Select your repository
+- Select `Starter Pipeline`
+- 
