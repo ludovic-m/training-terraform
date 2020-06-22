@@ -25,6 +25,7 @@
       - [Prerequisite : Create a variable group](#prerequisite--create-a-variable-group)
       - [Option 1 : Use a Terraform extension](#option-1--use-a-terraform-extension)
       - [Option 2 : Use a Container Job](#option-2--use-a-container-job)
+  - [What to do next](#what-to-do-next)
 
 <!-- tocstop -->
 
@@ -508,4 +509,23 @@ Using an extension can be problematic :
 
 #### Option 2 : Use a Container Job
 
-Using a container allows you to 
+Using a container allows you to have a better control of the context where your tasks run.
+
+In our case, we want a container with Terraform already installed (to run faster, and not take the risk at each pipeline execution that the Terraform repository is unavailable), and we don't want to use extensions anymore (a container is not mandatory for that).
+
+The prerequisites for a container to be used as a build agent are listed there <https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops>. Bottom line is: use an `ubuntu` container on a `ubuntu-16.04` host.
+
+An example of a `Dockerfile` can be found there : <https://github.com/ludovic-m/azure-devops-tf-container-agent/blob/master/Dockerfile>
+
+You can either build your own image, store it on Docker Hub or an Azure Container Registry, or you can use the image built using the Dockerfile mentionned before: `ldvcm/azure-devops-tf-agent`
+
+When doing a `terraform init`, you have to provide each variable value using the following syntax `--backend-config="variable_name=$(TF_VAR_variable_name)"`.
+
+## What to do next
+
+The following subjects were not covered, but can be useful in a Terraform project (not exhaustive) :
+
+- **Datasources**: If everything is not deployed using Terraform, or instead of putting everything in a single Terraform project, split your Terraform projects and use Datasources to get resources already existing in Azure.
+- **Local variables**: You can declare local variables (which can be calculated using others variables) that can be used accross all your project, without having the risk of the variable value being overwritten by a configuration file.
+- **Resources Import**: You can import existing resources in your Terraform project. It's useful if you want to include something in your Terraform project without having to recreate it (it does not generate a configuration, just import the resource as is in the state)
+- **Modules**: it's still limited in Terraform 0.12, but it's getting better in Terraform 0.13. It's a container for multiple resources that are used together. For example, if you have multiple multiple reverse proxies accross your solution, you can build a Reverse Proxy module and use it each time you need it without having to declare each time all the ressources (Virtual Machine, NIC, NSG, etc...). You should wait Terraform 0.13 to use modules.
