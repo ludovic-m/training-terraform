@@ -430,11 +430,11 @@ Redeploy the whole infrastructure.
 
 ## Exercice 7 : CI / CD with Azure DevOps
 
-The goal of this exercise is to run the build of your production infrastructure from Azure DevOps.
+The goal of this exercise is to run the build of your production infrastructure from Azure DevOps. You need an Azure DevOps project for this exercise, and admin privileges to install extensions for option 1 (you don't need it for option 2).
 
 ### Create a git repository
 
-Create a `.gitignore` file at the root of your working folder with the following content
+Create a `.gitignore` file at the root of your working folder with the following content, in order to avoid secrets or unecessary files in the repository.
 
 ```bash
 **/.terraform/*
@@ -506,6 +506,7 @@ Using an extension can be problematic :
 
 - Buggy updates of the extension can break your pipeline since you always use the latest version of the extension, and the extension is installed at the organization level.
 - The installation of an extension can bring names conflicts (for example if two extensions have a task named `TerraformInstaller`), and again, break pipelines accross the organization.
+- You don't usually have the permissions to manage extensions on an Azure DevOps organization.
 
 #### Option 2 : Use a Container Job
 
