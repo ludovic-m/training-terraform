@@ -24,6 +24,7 @@
     - [Deploy the prod infrastructure through a pipeline](#deploy-the-prod-infrastructure-through-a-pipeline)
       - [Prerequisite : Create a variable group](#prerequisite--create-a-variable-group)
       - [Option 1 : Use a Terraform extension](#option-1--use-a-terraform-extension)
+      - [Option 2 : Use a Container Job](#option-2--use-a-container-job)
 
 <!-- tocstop -->
 
@@ -428,7 +429,7 @@ Redeploy the whole infrastructure.
 
 ## Exercice 7 : CI / CD with Azure DevOps
 
-The goal of this exercise is to run the build of your infrastructure from Azure DevOps.
+The goal of this exercise is to run the build of your production infrastructure from Azure DevOps.
 
 ### Create a git repository
 
@@ -460,7 +461,7 @@ There's a lot of different ways to deploy a Terraform infrastructure in a pipeli
 
 The first one is the fastest and easiest one. We'll use a Terraform extension from the Azure DevOps Marketplace. However, this is not the safest way.
 
-The second one will use Job Containers. We'll use our own container to run the Terraform commands.
+The second one will use Container Jobs. We'll use our own container to run the Terraform commands.
 
 #### Prerequisite : Create a variable group
 
@@ -479,11 +480,32 @@ subscription_id
 
 #### Option 1 : Use a Terraform extension
 
-There's a bunch of Terraform extensions available in the Azure DevOps marketplace. The best one at the moment (June 2020) seems to be the one written by `Charles Zipp` : <https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform>
+There's a bunch of Terraform extensions available in the Azure DevOps marketplace. The best one at the moment (June 2020) seems to be the one written by `Charles Zipp` : <https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform>. It works for Linux and Windows agents (it's not the case for all Terraform extensions in the Marketplace).
 
 Install the extension, then create a new pipeline
 
-
 - Select your repository
 - Select `Starter Pipeline`
-- 
+
+Once you're in the pipeline editor :
+
+- Add the variable group to your pipeline
+
+```bash
+variables:
+- group: terraform
+```
+
+- Drag & Drop the Terraform tasks to Install Terraform, and do an `init` using your remote backend.
+- Since there's no option to select a workspace using the Terraform extension, use the Command Line task to perform the rest of the actions (select prod workspace, apply)
+
+> Since the TF_VAR_client_secret is marked as a secret, you have to provide the value as an input variable by adding the parameter `-var="client_secret=$(TF_VAR_client_secret)`. Terraform cannot grab it from environment variables like the other ones.
+
+Using an extension can be problematic :
+
+- Buggy updates of the extension can break your pipeline since you always use the latest version of the extension, and the extension is installed at the organization level.
+- The installation of an extension can bring names conflicts (for example if two extensions have a task named `TerraformInstaller`), and again, break pipelines accross the organization.
+
+#### Option 2 : Use a Container Job
+
+Using a container allows you to 
