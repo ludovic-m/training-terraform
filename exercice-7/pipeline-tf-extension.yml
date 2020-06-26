@@ -1,36 +1,36 @@
 variables:
   - group: terraform
   
-  trigger:
-  - master
-  
-  pool:
-    vmImage: 'ubuntu-latest'
-  
-  steps:
-  - task: TerraformInstaller@0
-    inputs:
-      terraformVersion: 'latest'
-  
-  - task: TerraformCLI@0
-    inputs:
-      command: 'init'
-      backendType: 'azurerm'
-      backendServiceArm: '<filled by the extension>'
-      backendAzureRmResourceGroupName: 'rg-terraform'
-      backendAzureRmStorageAccountName: 'lmetftraining'
-      backendAzureRmContainerName: 'tfstate'
-      backendAzureRmKey: 'training'
-  
-  - task: CmdLine@2 
-    inputs:
-      script: 'terraform workspace select prod'
-  
-  - task: CmdLine@2 
-    inputs:
-      script: 'terraform apply --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
-  
-  - task: CmdLine@2 
-    inputs:
-      script: 'terraform destroy --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: TerraformInstaller@0
+  inputs:
+    terraformVersion: 'latest'
+
+- task: TerraformCLI@0
+  inputs:
+    command: 'init'
+    backendType: 'azurerm'
+    backendServiceArm: '<filled by the extension>'
+    backendAzureRmResourceGroupName: 'rg-terraform'
+    backendAzureRmStorageAccountName: 'lmetftraining'
+    backendAzureRmContainerName: 'tfstate'
+    backendAzureRmKey: 'training'
+
+- task: CmdLine@2 
+  inputs:
+    script: 'terraform workspace select prod'
+
+- task: CmdLine@2 
+  inputs:
+    script: 'terraform apply --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
+
+- task: CmdLine@2 
+  inputs:
+    script: 'terraform destroy --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
   
