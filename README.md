@@ -532,3 +532,7 @@ The following subjects were not covered, but can be useful in a Terraform projec
 - **Local variables**: You can declare local variables (which can be calculated using others variables) that can be used accross all your project, without having the risk of the variable value being overwritten by a configuration file.
 - **Resources Import**: You can import existing resources in your Terraform project. It's useful if you want to include something in your Terraform project without having to recreate it (it does not generate a configuration, just import the resource as is in the state)
 - **Modules**: it's still limited in Terraform 0.12, but it's getting better in Terraform 0.13. It's a container for multiple resources that are used together. For example, if you have multiple multiple reverse proxies accross your solution, you can build a Reverse Proxy module and use it each time you need it without having to declare each time all the ressources (Virtual Machine, NIC, NSG, etc...). You should wait Terraform 0.13 to use modules.
+
+## References
+
+- [Hashicorp Learn](https://learn.hashicorp.com/terraform?track=azure#azure)
