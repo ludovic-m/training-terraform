@@ -26,6 +26,7 @@
       - [Option 1 : Use a Terraform extension](#option-1--use-a-terraform-extension)
       - [Option 2 : Use a Container Job](#option-2--use-a-container-job)
   - [What to do next](#what-to-do-next)
+  - [References](#references)
 
 <!-- tocstop -->
 
@@ -34,8 +35,6 @@
 - An active Azure subscription (with administrator privileges)
 - Visual Studio Code
   - Terraform extension : <https://marketplace.visualstudio.com/items?itemName=mauve.terraform>
-    - Enable support for 0.12 language : <https://medium.com/@gmusumeci/how-to-install-update-enable-and-disable-language-server-for-terraform-extension-in-visual-116e73f58722>
-  - Terraform snipets extension : <https://marketplace.visualstudio.com/items?itemName=mindginative.terraform-snippets> (extension outdated)
 - Azure CLI : <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest>
 - Git (optional) : <https://git-scm.com/download/win>
 - Terraform documentation for Azure : <https://www.terraform.io/docs/providers/azurerm/>
@@ -76,11 +75,20 @@ A terraform project is made of a collection of `*.tf` files. Terraform files are
 Create an empty folder, then create the file `main.tf`
 
 ```bash
+# Declaration of the providers
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+    }
+  }
+}
+
+# Configuration of Azure provider
 provider "azurerm" {
   features {}
  }
 
-# Snippet tf-azurerm_resource_group
 resource "azurerm_resource_group" "rg_training" {
    name = "rg-training"
    location = "West Europe"
@@ -136,7 +144,6 @@ A `terraform.tfstate` file has been created at the root of the folder. It contai
 We will add a Virtual Network and a Subnet in our resource group. Create a second file named `vnet.tf` and add the following resources :
 
 ```bash
-# Snippet : tf-azurerm_virtual_network
 resource "azurerm_virtual_network" "vnet_training" {
   name                = "vnet-training"
   location            = "West Europe"
@@ -144,7 +151,6 @@ resource "azurerm_virtual_network" "vnet_training" {
   address_space       = ["10.0.0.0/16"]
 }
 
-# Snippet : tf-azurerm_subnet
 resource "azurerm_subnet" "subnet_training" {
   name                 = "subnet-training"
   resource_group_name = azurerm_resource_group.rg_training.name
@@ -175,7 +181,7 @@ For each variable, you can set a default value (which can be overriden later).
 
 Perform the following tasks :
 
-- Add a `nic.tf` file and add a Network Interface using the snippet `tf-azurerm_network_interface` or the one in the official Terraform documentation
+- Add a `nic.tf` file and add a Network Interface using the following snippet or the one in the official Terraform documentation
 
 ```bash
 resource "azurerm_network_interface" "example" {
