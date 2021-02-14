@@ -88,7 +88,9 @@ terraform {
 # Configuration of Azure provider
 provider "azurerm" {
   features {}
- }
+
+  subscription_id = "<subscription_id>"
+}
 
 resource "azurerm_resource_group" "rg_training" {
    name = "rg-training"
@@ -96,8 +98,9 @@ resource "azurerm_resource_group" "rg_training" {
 }
 ```
 
-- The first line indicates which Terraform provider is to be used
-- The second block will create a resource group named `rg-training`
+- The first block declares which Terraform providers will be used
+- The second block configure the `azurerm` provider declared in the first block
+- The third block will create a resource group named `rg-training`
 
 Open a terminal, and go to the directory you just created.
 
@@ -114,11 +117,9 @@ Authenticate to your Azure Subscription using the Azure CLI (this won't work wit
 ```bash
 az login
 
-# If you have more than one subscription associated with your account, select the one you want to use
+# If you have more than one subscription associated with your account and didn't specify any in the configuration block, select the one you want to use
 az account set --subscription <subscription_id>
 ```
-
-> There's another way to authenticate to Azure to run your Terraform project, using an App. It's the recommended way to do in a real life situation, but the one we use is the fastest and is more than ok for a training.
 
 Once you're authenticated on Azure, run the following command :
 
@@ -325,7 +326,7 @@ Create a file named `vm.tf` and add a virtual machine resource with the spec def
 
 ```bash
 resource "azurerm_virtual_machine" "main" {
-  name                  = "vm"
+  name                            = "vm"
   location                        = azurerm_resource_group.main.location
   resource_group_name             = azurerm_resource_group.main.name
   size                            = "Standard_DS2_v2"
@@ -356,7 +357,7 @@ resource "azurerm_virtual_machine" "main" {
 
 A few things to note :
 
-- The hostname must contain only alphanumerical characters.
+- The hostname will be identical to the vm name.
 - The login of the VM cannot be **admin**
 
 ### Replicate Virtual Machines
@@ -532,8 +533,8 @@ The following subjects were not covered, but can be useful in a Terraform projec
 - **Datasources**: If everything is not deployed using Terraform, or instead of putting everything in a single Terraform project, split your Terraform projects and use Datasources to get resources already existing in Azure.
 - **Local variables**: You can declare local variables (which can be calculated using others variables) that can be used accross all your project, without having the risk of the variable value being overwritten by a configuration file.
 - **Resources Import**: You can import existing resources in your Terraform project. It's useful if you want to include something in your Terraform project without having to recreate it (it does not generate a configuration, just import the resource as is in the state)
-- **Modules**: it's still limited in Terraform 0.12, but it's getting better in Terraform 0.13. It's a container for multiple resources that are used together. For example, if you have multiple multiple reverse proxies accross your solution, you can build a Reverse Proxy module and use it each time you need it without having to declare each time all the ressources (Virtual Machine, NIC, NSG, etc...). You should wait Terraform 0.13 to use modules.
-
+- **Modules**: It's a container for multiple resources that are used together. For example, if you have multiple multiple reverse proxies accross your solution, you can build a Reverse Proxy module and use it each time you need it without having to declare each time all the ressources (Virtual Machine, NIC, NSG, etc...).
+  
 ## References
 
 - [Hashicorp Learn](https://learn.hashicorp.com/terraform?track=azure#azure)
