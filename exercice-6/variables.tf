@@ -7,14 +7,9 @@ variable "vnet_address_space" {
 }
 
 variable "subnet_prefix" {
-  type = "string"
+  type = "list"
 }
 
 variable "nb_vm" {
   default = 2
 }
-
-variable "subscription_id" { }
-variable "client_id" { }
-variable "client_secret" { }
-variable "tenant_id" { }

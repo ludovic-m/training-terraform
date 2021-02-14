@@ -7,5 +7,5 @@ variable "vnet_address_space" {
 }
 
 variable "subnet_prefix" {
-  type = "string"
+  type = "list"
 }
