@@ -8,7 +8,9 @@ terraform {
 
 provider "azurerm" {
   features {}
- }
+
+  # subscription_id = ""
+}
 
 # Snippet tf-azurerm_resource_group
 resource "azurerm_resource_group" "rg_training" {

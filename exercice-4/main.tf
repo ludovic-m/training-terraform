@@ -9,7 +9,9 @@ terraform {
 
 provider "azurerm" {
   features {}
- }
+
+  # subscription_id = ""
+}
 
 resource "azurerm_resource_group" "rg_training" {
    name = "rg-${terraform.workspace}-training"

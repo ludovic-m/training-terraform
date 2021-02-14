@@ -173,11 +173,11 @@ Once you've checked that all the resources have been created correctly, destroy 
 
 We will add a Network Interface in our subnet, and introduce the use of variables and built-in functions.
 
-We will create a file named `variables.tf` where we will declare all the variables we're going to use, with a default value. Then we will create a file named `values.tfvars` which will contain the vales of our variables.
+First, we will create a file named `variables.tf` where we will declare all the variables we're going to use, with a default value. Then we will create a file named `values.tfvars` which will contain the vales of our variables.
 
-For example, we will declare the `location` variable, set the value to `West Europe`, and use it for every resources we have.
+For example, we will declare the `location` variable, set the default value to `West Europe`, and use it for every resources we have.
 
-For each variable, you can set a default value (which can be overriden later).
+For each variable, you can set a default value (which can be overriden).
 
 Perform the following tasks :
 
@@ -208,7 +208,14 @@ variable "location" {
 }
 ```
 
-- In each `.tf` file (main, nic, vnet), replace hardcoded values with variables
+- In each `.tf` file (main, nic, vnet), replace hardcoded values with variables. If you don't provide a default value, don't forget to specify the type of the variable
+
+```bash
+variable "vnet_address_space" {
+  type = list
+}
+```
+
 - Create a file `values.tfvars` which will contain values for the variables, using the following syntax :
 
 ```bash
@@ -236,7 +243,7 @@ Workspaces allow you yo have multiple version of the same infrastructure. It's u
 
 Every workspace has a dedicated `.tfstate` file.
 
-The goal of this exercise is to create two workspaces : **Production** and **Development**. For each workspace, we will create a dedicated `.tfvars` file, in order to have different values for each environment.
+The goal of this exercise is to create two workspaces : **prod** and **dev**. For each workspace, we will create a dedicated `.tfvars` file, in order to have different values for each environment.
 
 - Create a  `dev.tfvars`, copy / paste the content of the `values.tfvars` file, and change the values.
 - Rename the `values.tfvars` in `prod.tfvars`
@@ -269,7 +276,7 @@ The virtual machines must have the following configuration :
 | vm_size | "Standard_DS2_v2" (permet d'avoir des disques Premium) |
 | OS publisher | "Canonical" |
 | OS offer | "UbuntuServer"|
-| OS sku | "14.04.2-LTS" |
+| OS sku | "18.04-LTS" |
 | OS version | latest |
 |managed_disk_type |"Premium_LRS" |
 
@@ -313,7 +320,7 @@ resource "azurerm_subnet_network_security_group_association" "example" {
 
 ### Virtual Machine
 
-Create a file named `vm.tf` and add a virtual machine resource with the spec defined earlier.
+Create a file named `vm.tf` and add a virtual machine resource with the spec defined earlier. When creating a virtual machine using terraform, use the `azurerm_linux_virtual_machine` or the `azurerm_windows_virtual_machine` resource. The `azurerm_virtual_machine` resource is older and may be deprecated in the future.
 
 ```bash
 resource "azurerm_virtual_machine" "main" {

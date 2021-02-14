@@ -1,6 +1,6 @@
 resource "azurerm_network_interface" "nic_training" {
   count               = var.nb_vm
-  name                = "nic-${terraform.workspace}-training-${count.index+1}"
+  name                = "nic-${terraform.workspace}-training-${count.index + 1}"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg_training.name
 
