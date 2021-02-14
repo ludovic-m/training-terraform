@@ -20,6 +20,7 @@
     - [Optional : Add an Azure Load Balancer](#optional--add-an-azure-load-balancer)
   - [Exercice 6 : Remote Tfstate](#exercice-6--remote-tfstate)
   - [Exercice 7 : CI / CD with Azure DevOps](#exercice-7--ci--cd-with-azure-devops)
+    - [Create an App registration](#create-an-app-registration)
     - [Create a git repository](#create-a-git-repository)
     - [Deploy the prod infrastructure through a pipeline](#deploy-the-prod-infrastructure-through-a-pipeline)
       - [Prerequisite : Create a variable group](#prerequisite--create-a-variable-group)
@@ -325,38 +326,30 @@ Create a file named `vm.tf` and add a virtual machine resource with the spec def
 ```bash
 resource "azurerm_virtual_machine" "main" {
   name                  = "vm"
-  location              = azurerm_resource_group.main.location
-  resource_group_name   = azurerm_resource_group.main.name
-  network_interface_ids = [azurerm_network_interface.main.id]
-  vm_size               = "Standard_DS2_v2"
+  location                        = azurerm_resource_group.main.location
+  resource_group_name             = azurerm_resource_group.main.name
+  size                            = "Standard_DS2_v2"
+  admin_username                  = "avanade"
+  network_interface_ids           = [azurerm_network_interface.main.id]
+  disable_password_authentication = false
+  admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
+  
+  # admin_ssh_key {
+  #   username   = "avanade"
+  #   public_key = "<pub_key>"
+  # }
 
-  delete_os_disk_on_termination = true
+  os_disk {
+    name                 = "myosdisk1"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
 
-  delete_data_disks_on_termination = true
-
-  storage_image_reference {
+  source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
+    sku       = "18.04-LTS"
     version   = "latest"
-  }
-  storage_os_disk {
-    name              = "myosdisk1"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-  os_profile {
-    computer_name  = "hostname"
-    admin_username = "avanade"
-  }
-  os_profile_linux_config {
-    disable_password_authentication = true
-
-    ssh_keys {
-      path     = "/home/avanade/.ssh/authorized_keys"
-      key_data = "ssh_public_key"
-    }
   }
 }
 ```
@@ -386,53 +379,44 @@ Until now, the `.tfstate` file, which save the state of the infrastructure, is s
 
 Terraform allow you to store the `.tfstate` remotely, so you can share it with the rest of your team.
 
-During the exercise, we will also switch from Azure CLI authentication to using an Azure AD App.
-
 On Azure, Terraform supports to store the `.tfstate` in a Blob Storage.
 
 On the Azure side, you have to :
 
-- Create an App in your Azure AD tenant
-- Generate a client secret
-- Give this App Contributor or Owner permissions on your subscription
 - Create a Blob Container in a Storage Account (manually, without Terraform)
+- Grab one of the 2 admin keys
 
 On the Terraform side, you have to :
 
-- Modify the `main.tf` file to add the backend config (which host the `.tfstate`), modify the provider bloc to enable the Azure App authentication, and add the missing variables in the `variables.tf` file
+- Modify the `main.tf` file to add the backend config (which host the `.tfstate`), add the backend block
 
 ```bash
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+    }
+  }
+  backend "azurerm" {
+    storage_account_name = "abcd1234"
+    container_name       = "tfstate"
+    key                  = "training.terraform.tfstate"
+  }
+}
+
 provider "azurerm" {
   features {}
 
-  subscription_id = "${var.subscription_id}"
-  client_id       = "${var.client_id}"
-  client_secret   = "${var.client_secret}"
-  tenant_id       = "${var.tenant_id}"
-}
-
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "<resource group name>"
-    storage_account_name = "<storage account name>"
-    container_name       = "<container name>"
-    key                  = "<key>"
-  }
+  # subscription_id = "subscription_id"
 }
 ```
 
-- Create a `backend.secrets.tfvars` file, containing the infos to connect to the storage account, and a file `auth.secrets.tfvars` containing the infos to authenticate your Azure subscription
+- Create a `backend.secrets.tfvars` file, containing the infos to connect to the storage account.
 
-According to the Terraform documentation, the config file for the backend must contains the following values :
+According to the Terraform documentation, you  have multiple ways to authenticate for the backend configuration. We'll use the admin key we got earlier :
 
 ```bash
-subscription_id = "subscription_id"
-
-client_id = "client_id"
-
-client_secret = "client_secret"
-
-tenant_id = "tenant_id"
+access_key = "key"
 ```
 
 Initialize the backend to take into account the modifications. If you have an error, delete the `.terraform` folder and try again.
@@ -447,6 +431,14 @@ Redeploy the whole infrastructure.
 
 The goal of this exercise is to run the build of your production infrastructure from Azure DevOps. You need an Azure DevOps project for this exercise, and admin privileges to install extensions for option 1 (you don't need it for option 2).
 
+### Create an App registration
+
+Since we can't have an interactive login during a pipeline, we need an App Registration. You'll need the following properties :
+
+- Client ID
+- Client Secret
+- Tenant ID
+
 ### Create a git repository
 
 Create a `.gitignore` file at the root of your working folder with the following content, in order to avoid secrets or unecessary files in the repository.
@@ -459,6 +451,7 @@ Create a `.gitignore` file at the root of your working folder with the following
 *.secrets
 *.tfstate
 *.tfstate.*
+*.lock.*
 ```
 
 In your Azure DevOps project, create an empty projet, then push your code in the (default) repository.
@@ -481,17 +474,16 @@ The second one will use Container Jobs. We'll use our own container to run the T
 
 #### Prerequisite : Create a variable group
 
-Since we don't want to commit any secrets (no, we don't) or configuration values in our git repository, we'll use environment variable.
-
-Terraform look at all the environment variables starting with `TF_VAR_` in order set variables. For example, if you have a variable named `my_variable`, Terraform will look for an environment variable named `TF_VAR_my_variable` to set the value.
+Since we don't want to commit any secrets (no, we don't) or configuration values in our git repository, we'll use environment variable to authenticate to our backend and to our azure subscription. Terraform support using environment variable for that ( <https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret> ).
 
 You can either create variables at the pipeline level, or create variables across pipelines using variable groups. Since we'll create two pipelines, we'll use a variable group. Create one and set the value for the following variables:
 
 ```bash
-client_id
-client_secret
-tenant_id
-subscription_id
+ARM_CLIENT_ID
+ARM_CLIENT_SECRET
+ARM_SUBSCRIPTION_ID
+ARM_TENANT_ID
+ARM_ACCESS_KEY
 ```
 
 #### Option 1 : Use a Terraform extension
@@ -509,13 +501,11 @@ Once you're in the pipeline editor :
 
 ```bash
 variables:
-- group: terraform
+- group: TF
 ```
 
 - Drag & Drop the Terraform tasks to Install Terraform, and do an `init` using your remote backend.
 - Since there's no option to select a workspace using the Terraform extension, use the Command Line task to perform the rest of the actions (select prod workspace, apply)
-
-> Since the TF_VAR_client_secret is marked as a secret, you have to provide the value as an input variable by adding the parameter `-var="client_secret=$(TF_VAR_client_secret)`. Terraform cannot grab it from environment variables like the other ones.
 
 Using an extension can be problematic :
 
@@ -529,13 +519,11 @@ Using a container allows you to have a better control of the context where your 
 
 In our case, we want a container with Terraform already installed (to run faster, and not take the risk at each pipeline execution that the Terraform repository is unavailable), and we don't want to use extensions anymore (a container is not mandatory for that).
 
-The prerequisites for a container to be used as a build agent are listed there <https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops>. Bottom line is: use an `ubuntu` container on a `ubuntu-16.04` host.
+The prerequisites for a container to be used as a build agent are listed there <https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops>. Bottom line is: use an `ubuntu` container on a `ubuntu-18.04` host.
 
 An example of a `Dockerfile` can be found there : <https://github.com/ludovic-m/azure-devops-tf-container-agent/blob/master/Dockerfile>
 
 You can either build your own image, store it on Docker Hub or an Azure Container Registry, or you can use the image built using the Dockerfile mentionned before: `ldvcm/azure-devops-tf-agent`
-
-When doing a `terraform init`, you have to provide each variable value using the following syntax `--backend-config="variable_name=$(TF_VAR_variable_name)"`.
 
 ## What to do next
 

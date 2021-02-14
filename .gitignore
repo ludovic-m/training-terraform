@@ -18,6 +18,7 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
+*.lock.*
 
 # .tfvars files
 # *.tfvars

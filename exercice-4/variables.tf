@@ -3,9 +3,9 @@ variable "location" {
 }
 
 variable "vnet_address_space" {
-  type = list
+  type = list(string)
 }
 
 variable "subnet_prefix" {
-  type = list
+  type = list(string)
 }

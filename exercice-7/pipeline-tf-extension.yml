@@ -1,6 +1,6 @@
 variables:
-  - group: terraform
-  
+- group: TF
+
 trigger:
 - master
 
@@ -8,6 +8,10 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+- task: CmdLine@2
+  inputs:
+    script: 'printenv'
+
 - task: TerraformInstaller@0
   inputs:
     terraformVersion: 'latest'
@@ -16,21 +20,19 @@ steps:
   inputs:
     command: 'init'
     backendType: 'azurerm'
-    backendServiceArm: '<filled by the extension>'
+    backendServiceArm: 'Visual Studio Enterprise Subscription(90f4b65b-b9f2-4d70-be7d-b7406dc4d61a)'
     backendAzureRmResourceGroupName: 'rg-terraform'
-    backendAzureRmStorageAccountName: 'lmetftraining'
+    backendAzureRmStorageAccountName: '<storage_account_name>'
     backendAzureRmContainerName: 'tfstate'
-    backendAzureRmKey: 'training'
+    backendAzureRmKey: 'training.terraform.tfstate'
+    allowTelemetryCollection: true
 
-- task: CmdLine@2 
+- task: CmdLine@2
   inputs:
     script: 'terraform workspace select prod'
 
-- task: CmdLine@2 
+- task: TerraformCLI@0
   inputs:
-    script: 'terraform apply --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
-
-- task: CmdLine@2 
-  inputs:
-    script: 'terraform destroy --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
-  
+    command: 'apply'
+    commandOptions: '--var-file="prod.tfvars"'
+    allowTelemetryCollection: false

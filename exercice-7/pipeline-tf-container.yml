@@ -1,33 +1,25 @@
 variables:
-- group: terraform
-  
+- group: TF
+
 trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-16.04'
+  vmImage: 'ubuntu-18.04'
 
 container:
   image: ldvcm/azure-devops-tf-agent
 
-
 steps:
-- task: CmdLine@2 
+- task: CmdLine@2
   inputs:
     script: 'terraform --version'
-
-- task: CmdLine@2 
+- task: CmdLine@2
   inputs:
-    script: 'terraform init -input=false --backend-config="client_secret=$(TF_VAR_client_secret)" --backend-config="client_id=$(TF_VAR_client_id)" --backend-config="subscription_id=$(TF_VAR_subscription_id)" --backend-config="tenant_id=$(TF_VAR_tenant_id)"'
-
-- task: CmdLine@2 
+    script: 'terraform init'
+- task: CmdLine@2
   inputs:
     script: 'terraform workspace select prod'
-
-- task: CmdLine@2 
+- task: CmdLine@2
   inputs:
-    script: 'terraform apply --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
-
-- task: CmdLine@2 
-  inputs:
-    script: 'terraform destroy --var-file="prod.tfvars" -var="client_secret=$(TF_VAR_client_secret)" -auto-approve'
+    script: 'terraform apply --var-file=prod.tfvars -auto-approve'
