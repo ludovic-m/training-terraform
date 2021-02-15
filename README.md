@@ -325,7 +325,7 @@ resource "azurerm_subnet_network_security_group_association" "example" {
 Create a file named `vm.tf` and add a virtual machine resource with the spec defined earlier. When creating a virtual machine using terraform, use the `azurerm_linux_virtual_machine` or the `azurerm_windows_virtual_machine` resource. The `azurerm_virtual_machine` resource is older and may be deprecated in the future.
 
 ```bash
-resource "azurerm_virtual_machine" "main" {
+resource "azurerm_linux_virtual_machine" "main" {
   name                            = "vm"
   location                        = azurerm_resource_group.main.location
   resource_group_name             = azurerm_resource_group.main.name
