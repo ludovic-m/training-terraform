@@ -81,6 +81,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
+      version = "=2.47.0"
     }
   }
 }
@@ -332,6 +333,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   size                            = "Standard_DS2_v2"
   admin_username                  = "avanade"
   network_interface_ids           = [azurerm_network_interface.main.id]
+  availability_set_id             = azurerm_availability_set.main.id
   disable_password_authentication = false
   admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
   
@@ -396,6 +398,7 @@ terraform {
   required_providers {
     azurerm = {
       source = "hashicorp/azurerm"
+      version = "=2.47.0"
     }
   }
   backend "azurerm" {
