@@ -215,7 +215,7 @@ variable "location" {
 
 ```bash
 variable "vnet_address_space" {
-  type = list
+  type = list(string)
 }
 ```
 
