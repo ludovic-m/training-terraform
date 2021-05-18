@@ -404,7 +404,7 @@ terraform {
   backend "azurerm" {
     storage_account_name = "abcd1234"
     container_name       = "tfstate"
-    key                  = "training.terraform.tfstate"
+    key                  = "training.terraform.tfstate" # the value can be anything
   }
 }
 
