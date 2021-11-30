@@ -18,6 +18,7 @@
     - [Virtual Machine](#virtual-machine)
     - [Replicate Virtual Machines](#replicate-virtual-machines)
     - [Optional : Add an Azure Load Balancer](#optional--add-an-azure-load-balancer)
+  - [Exercice 5bis (optional): Use foreach instead of count](#exercice-5bis-optional-use-foreach-instead-of-count)
   - [Exercice 6 : Remote Tfstate](#exercice-6--remote-tfstate)
   - [Exercice 7 : CI / CD with Azure DevOps](#exercice-7--ci--cd-with-azure-devops)
     - [Create an App registration](#create-an-app-registration)
@@ -176,48 +177,45 @@ Once you've checked that all the resources have been created correctly, destroy 
 
 We will add a Network Interface in our subnet, and introduce the use of variables and built-in functions.
 
-First, we will create a file named `variables.tf` where we will declare all the variables we're going to use, with a default value. Then we will create a file named `values.tfvars` which will contain the vales of our variables.
+First, we will create a file named `variables.tf` where we will declare all the variables we're going to use, with a default value. Then, we will create a `Network Interface Card` and use those variables. Finally we will create a file named `values.tfvars` which will contain the values of the variables (used to overwrite default values or when no default value is provided).
 
 For example, we will declare the `location` variable, set the default value to `West Europe`, and use it for every resources we have.
 
-For each variable, you can set a default value (which can be overriden).
-
 Perform the following tasks :
+
+
+- Add a `variables.tf` file and declare the `location` and `vnet_address_space` variable with a default value set to `West Europe` for the location
+
+```bash
+variable "location" {
+  default = "West Europe"
+}
+
+variable "vnet_address_space" {
+  type = list(string)
+}
+```
 
 - Add a `nic.tf` file and add a Network Interface using the following snippet or the one in the official Terraform documentation
 
 ```bash
 resource "azurerm_network_interface" "example" {
   name                = "example-nic"
-  location            = azurerm_resource_group.example.location
+  location            = "West Europe"
   resource_group_name = azurerm_resource_group.example.name
 
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.example.id
     private_ip_address_allocation = "Static"
-    private_ip_address            = cidrhost(azurerm_subnet.subnet_training.address_prefix, 10)
+    private_ip_address            = cidrhost(element(azurerm_subnet.subnet_training.address_prefixes, 1), 10)
   }
 }
 ```
 
-The `cidrhost` function allows you to calculate an address using a subnet prefix.
+The `element`function allows you to select an element within a `list` object, and the `cidrhost` function to calculate an address using a range of IPs.
 
-- Add a `variables.tf` file and declare the `location` variable with a default value set to `West Europe`
-
-```bash
-variable "location" {
-  default = "West Europe"
-}
-```
-
-- In each `.tf` file (main, nic, vnet), replace hardcoded values with variables. If you don't provide a default value, don't forget to specify the type of the variable
-
-```bash
-variable "vnet_address_space" {
-  type = list(string)
-}
-```
+- In each `.tf` file (main, nic, vnet), replace hardcoded values with variables. 
 
 - Create a file `values.tfvars` which will contain values for the variables, using the following syntax :
 
@@ -364,6 +362,7 @@ A few things to note :
 
 ### Replicate Virtual Machines
 
+
 Now that you have a virtual machine, use the `count` keyword to duplicate it.
 
 - Declare a variable to define the number of virtual machines you need.
@@ -375,6 +374,45 @@ At the end of the exercise, delete the infrastructure on both workspaces.
 ### Optional : Add an Azure Load Balancer
 
 Add a public Azure Load Balancer with a public IP, and a rule to load balance TCP traffic on the port 443 of your virtual machines. Don't forget to open the port 443 on your NSG.
+
+## Exercice 5bis (optional): Use foreach instead of count
+
+The usage a the keyword `count` may be problematic in some scenarios, where all the instances of the resource are not meant to be the same For example, you may want to create multiple virtual machine, with a different role (web, backend, database,...). For this scenario, you should use the `for_each` property.
+
+Documentation : <https://www.terraform.io/docs/language/meta-arguments/for_each.html>
+
+- Use a variable of type `map` to declare the list of the VMs you want to create
+  
+```bash
+variable "vms" {
+  type = map(object({
+    name  = string
+    ip_index = number
+    }
+  ))
+}
+```
+
+- Give a value to this variable in `.tfvars` files
+
+```bash
+vms = {
+  vm01 = {
+    name     = "frontend"
+    ip_index = 0
+  },
+  vm02 = {
+    name     = "backend"
+    ip_index = 1
+  },
+  vm03 = {
+    name     = "database"
+    ip_index = 2
+  }
+}
+```
+
+- Replace the `count` property with `for_each` using the `map` variable you just created (the index property in the `map` variable should be use to replace the `count.index` when calculating the private IP address)
 
 ## Exercice 6 : Remote Tfstate
 
@@ -398,7 +436,6 @@ terraform {
   required_providers {
     azurerm = {
       source = "hashicorp/azurerm"
-      version = "=2.47.0"
     }
   }
   backend "azurerm" {

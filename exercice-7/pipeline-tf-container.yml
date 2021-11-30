@@ -7,8 +7,7 @@ trigger:
 pool:
   vmImage: 'ubuntu-18.04'
 
-container:
-  image: ldvcm/azure-devops-tf-agent
+container: ldvcm.azurecr.io/azure-devops-tf-container-agent:latest
 
 steps:
 - task: CmdLine@2
