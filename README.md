@@ -490,6 +490,8 @@ Create a `.gitignore` file at the root of your working folder with the following
 **/backend/*
 *.secrets.*
 *.secrets
+*.secret.*
+*.secret
 *.tfstate
 *.tfstate.*
 *.lock.*
