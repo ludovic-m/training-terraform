@@ -332,6 +332,8 @@ Create a file named `vm.tf` and add a virtual machine resource with the spec def
 
 > Check the available Azure VM image SKUs with az cli command, such as `az vm image list-skus -l westeurope -f UbuntuServer -p Canonical`
 
+> When an `admin_password` is specified, `disable_password_authentication` must be set to false. ~> NOTE: One of either admin_password or admin_ssh_key must be specified.
+
 ```bash
 resource "azurerm_linux_virtual_machine" "main" {
   name                            = "vm"
@@ -341,12 +343,15 @@ resource "azurerm_linux_virtual_machine" "main" {
   admin_username                  = "avanade"
   network_interface_ids           = [azurerm_network_interface.main.id]
   availability_set_id             = azurerm_availability_set.main.id
-  disable_password_authentication = false
-  admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
+
+  disable_password_authentication = true
+  # admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
   
+  # run keygen.sh with bash
+  # use password mode as alternative in case of difficulty
   admin_ssh_key {
-    username   = "avanade"
-    public_key = "<pub_key>"
+    username   = "azureuser"
+    public_key = file("~/.ssh/id_rsa.pub")
   }
 
   identity {
@@ -372,7 +377,6 @@ A few things to note :
 
 - The hostname will be identical to the vm name.
 - The login of the VM cannot be **admin**
-- When an `admin_password` is specified, `disable_password_authentication` must be set to false. ~> NOTE: One of either admin_password or admin_ssh_key must be specified.
 
 ### Replicate Virtual Machines
 
