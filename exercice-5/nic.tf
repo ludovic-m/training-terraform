@@ -5,7 +5,7 @@ resource "azurerm_network_interface" "nic_training" {
   resource_group_name = azurerm_resource_group.rg_training.name
 
   ip_configuration {
-    name                          = "ip-config-training"
+    name                          = "ipconfig-${terraform.workspace}-${count.index + 1}"
     subnet_id                     = azurerm_subnet.subnet_training.id
     private_ip_address_allocation = "Static"
     private_ip_address            = cidrhost(element(azurerm_subnet.subnet_training.address_prefixes, 1), 10 + count.index)

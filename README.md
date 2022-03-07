@@ -70,11 +70,12 @@ Then you can install Terraform
 choco install terraform
 ```
 
+---
 ## Exercise 1 : Terraform initialization and creation of a resourge group
 
 A terraform project is made of a collection of `*.tf` files. Terraform files are written using HCL (HashiCorp Configuration Language)
 
-Create an empty folder, then create the file `main.tf`
+**Create an empty folder - this will be the project folder for all the exercices**, then create the file `main.tf`
 
 ```bash
 # Declaration of the providers
@@ -82,7 +83,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.47.0"
+      version = "=2.98.0"
     }
   }
 }
@@ -143,6 +144,7 @@ Using the command `az group list` or directly in the Azure Portal, you should no
 
 A `terraform.tfstate` file has been created at the root of the folder. It contains the state of your infrastructure deployed with your Terraform project. One again, don't put this file in your Source Control, even if you are more than one working on the project. You will see later how to store it to work in a distributed way.
 
+---
 ## Exercise 2 : Creation of a Virtual Network
 
 We will add a Virtual Network and a Subnet in our resource group. Create a second file named `vnet.tf` and add the following resources :
@@ -173,6 +175,7 @@ Once you've checked that all the resources have been created correctly, destroy 
 
 > Optional : Add a tag for the virtual network (for example 'environment = "prod"')
 
+---
 ## Exercice 3 : Variables and functions
 
 We will add a Network Interface in our subnet, and introduce the use of variables and built-in functions.
@@ -213,7 +216,7 @@ resource "azurerm_network_interface" "example" {
 }
 ```
 
-The `element`function allows you to select an element within a `list` object, and the `cidrhost` function to calculate an address using a range of IPs.
+The `element` function allows you to select an element within a `list` object, and the [`cidrhost` function](https://www.terraform.io/language/functions/cidrhost) to calculate an address using a range of IPs.
 
 - In each `.tf` file (main, nic, vnet), replace hardcoded values with variables. 
 
@@ -238,6 +241,7 @@ Once you've checked that everything is deployed correctly, run a `terraform dest
 
 > Tips : Use the `variables.tf` file to declare variables that are used globally accross tf files. If a variable is only used in a single `.tf` file, like, for example, the `vnet_address_space`, declare it directly in the same `.tf` file. Doing this, you can differentiate global and local variables, even if in the end, it's the same for the Terraform engine.
 
+---
 ## Exercice 4 : Workspaces
 
 Workspaces allow you yo have multiple version of the same infrastructure. It's used, for example, to create a Production environment, a Development environment, etc...
@@ -249,7 +253,7 @@ The goal of this exercise is to create two workspaces : **prod** and **dev**. Fo
 - Create a  `dev.tfvars`, copy / paste the content of the `values.tfvars` file, and change the values.
 - Rename the `values.tfvars` in `prod.tfvars`
 - Create two workspaces with the command `terraform workspace new <workspace_name>`
-- Use the variable `terraform.workspace` in your resources name in order to identify each resources created within the workspace. For example, in the `main.tf` file :
+- Update all the tf **resources names** with the variable `terraform.workspace` in order to identify the workspace of the resource. For example, in the `main.tf` file :
 
 ```bash
 resource "azurerm_resource_group" "rg_training" {
@@ -260,15 +264,18 @@ resource "azurerm_resource_group" "rg_training" {
 
 - Deploy the two environments on each workspaces
 
-To switch between workspaces, use the command `terraform workspace select <workspace_name>`
+> To check the current workspace, use the commande `terraform workspace show`
 
-To see the list of workspaces, and which one of them is selected, use the command `terraform workspace list`
+> To see the list of workspaces, and which one of them is selected, use the command `terraform workspace list`
 
+> To switch between workspaces, use the command `terraform workspace select <workspace_name>`
+
+---
 ## Exercice 5 : Build a set of virtual machines
 
 The goal is to continue the previous exercise to build the following infrastructure :
 
-![exercice6-infra](exercice6.jpg)
+![exercice5-infra](exercice5.jpg)
 
 The virtual machines must have the following configuration :
 
@@ -321,24 +328,30 @@ resource "azurerm_subnet_network_security_group_association" "example" {
 
 ### Virtual Machine
 
-Create a file named `vm.tf` and add a virtual machine resource with the spec defined earlier. When creating a virtual machine using terraform, use the `azurerm_linux_virtual_machine` or the `azurerm_windows_virtual_machine` resource. The `azurerm_virtual_machine` resource is older and may be deprecated in the future.
+Create a file named `vm.tf` and add a virtual machine resource with the spec defined earlier. When creating a virtual machine using terraform, use the `azurerm_linux_virtual_machine` or the `azurerm_windows_virtual_machine` resource.
+
+> Check the available Azure VM image SKUs with az cli command, such as `az vm image list-skus -l westeurope -f UbuntuServer -p Canonical`
 
 ```bash
 resource "azurerm_linux_virtual_machine" "main" {
   name                            = "vm"
   location                        = azurerm_resource_group.main.location
   resource_group_name             = azurerm_resource_group.main.name
-  size                            = "Standard_DS2_v2"
+  size                            = "Standard_D2s_v3"
   admin_username                  = "avanade"
   network_interface_ids           = [azurerm_network_interface.main.id]
   availability_set_id             = azurerm_availability_set.main.id
   disable_password_authentication = false
   admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
   
-  # admin_ssh_key {
-  #   username   = "avanade"
-  #   public_key = "<pub_key>"
-  # }
+  admin_ssh_key {
+    username   = "avanade"
+    public_key = "<pub_key>"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
 
   os_disk {
     name                 = "myosdisk1"
@@ -359,6 +372,7 @@ A few things to note :
 
 - The hostname will be identical to the vm name.
 - The login of the VM cannot be **admin**
+- When an `admin_password` is specified, `disable_password_authentication` must be set to false. ~> NOTE: One of either admin_password or admin_ssh_key must be specified.
 
 ### Replicate Virtual Machines
 
@@ -373,7 +387,7 @@ At the end of the exercise, delete the infrastructure on both workspaces.
 
 ### Optional : Add an Azure Load Balancer
 
-Add a public Azure Load Balancer with a public IP, and a rule to load balance TCP traffic on the port 443 of your virtual machines. Don't forget to open the port 443 on your NSG.
+Add a public Azure Load Balancer with a public IP, and a rule to load balance TCP traffic on the port 80 of your virtual machines. Don't forget to open the port 80 on your NSG.
 
 ## Exercice 5bis (optional): Use foreach instead of count
 
@@ -414,6 +428,7 @@ vms = {
 
 - Replace the `count` property with `for_each` using the `map` variable you just created (the index property in the `map` variable should be use to replace the `count.index` when calculating the private IP address)
 
+---
 ## Exercice 6 : Remote Tfstate
 
 Until now, the `.tfstate` file, which save the state of the infrastructure, is stored locally. This is a problem when you're not the only one working on the Terraform project, or when you use a CI / CD pipeline to deploy your infrastructure (executed in a stateless agent).
@@ -468,6 +483,7 @@ terraform init --backend-config="backend.secrets.tfvars"
 
 Redeploy the whole infrastructure.
 
+---
 ## Exercice 7 : CI / CD with Azure DevOps
 
 The goal of this exercise is to run the build of your production infrastructure from Azure DevOps. You need an Azure DevOps project for this exercise, and admin privileges to install extensions for option 1 (you don't need it for option 2).
@@ -580,3 +596,4 @@ The following subjects were not covered, but can be useful in a Terraform projec
 ## References
 
 - [Hashicorp Learn](https://learn.hashicorp.com/terraform?track=azure#azure)
+- [Terraform azurerm Provider Documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
