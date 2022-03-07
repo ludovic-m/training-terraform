@@ -340,7 +340,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   location                        = azurerm_resource_group.main.location
   resource_group_name             = azurerm_resource_group.main.name
   size                            = "Standard_D2s_v3"
-  admin_username                  = "avanade"
+  admin_username                  = "azureuser"
   network_interface_ids           = [azurerm_network_interface.main.id]
   availability_set_id             = azurerm_availability_set.main.id
 
