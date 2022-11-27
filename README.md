@@ -83,7 +83,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.98.0"
+      version = ">= 3.0.0, < 4.0.0"
     }
   }
 }
@@ -195,6 +195,10 @@ variable "location" {
 }
 
 variable "vnet_address_space" {
+  type = list(string)
+}
+
+variable "subnet_prefixes"{
   type = list(string)
 }
 ```
@@ -344,19 +348,19 @@ resource "azurerm_linux_virtual_machine" "main" {
   network_interface_ids           = [azurerm_network_interface.main.id]
   availability_set_id             = azurerm_availability_set.main.id
 
-  disable_password_authentication = true
-  # admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
+  disable_password_authentication = false
+  admin_password                  = "Some-Secret-You-Dont-Commit-In-Git"
   
   # run keygen.sh with bash
   # use password mode as alternative in case of difficulty
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = file("~/.ssh/id_rsa.pub")
-  }
+  # admin_ssh_key {
+  #   username   = "azureuser"
+  #   public_key = file("~/.ssh/id_rsa.pub")
+  # }
 
-  identity {
-    type = "SystemAssigned"
-  }
+  # identity {
+  #   type = "SystemAssigned"
+  # }
 
   os_disk {
     name                 = "myosdisk1"
