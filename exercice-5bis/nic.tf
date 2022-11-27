@@ -1,6 +1,6 @@
 resource "azurerm_network_interface" "nic_training" {
   for_each            = var.vms
-  name                = "nic-${terraform.workspace}-${each.value.name}"
+  name                = "nic-${terraform.workspace}-training-${each.value.name}"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg_training.name
 

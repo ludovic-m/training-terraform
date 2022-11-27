@@ -11,8 +11,3 @@ resource "azurerm_subnet" "subnet_training" {
   virtual_network_name = azurerm_virtual_network.vnet_training.name
   address_prefixes     = var.subnet_prefix
 }
-
-resource "azurerm_subnet_network_security_group_association" "nsg_subnet_training" {
-  subnet_id                 = azurerm_subnet.subnet_training.id
-  network_security_group_id = azurerm_network_security_group.nsg_training.id
-}

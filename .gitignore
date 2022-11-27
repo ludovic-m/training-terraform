@@ -22,3 +22,6 @@
 
 # .tfvars files
 # *.tfvars
+
+# local workfolder
+/workfolder
