@@ -20,7 +20,10 @@
     - [Optional : Add an Azure Load Balancer](#optional--add-an-azure-load-balancer)
   - [Exercice 5bis (optional): Use foreach instead of count](#exercice-5bis-optional-use-foreach-instead-of-count)
   - [Exercice 6 : Remote Tfstate](#exercice-6--remote-tfstate)
-  - [Exercice 7 : CI / CD with Azure DevOps](#exercice-7--ci--cd-with-azure-devops)
+  - [Exercice 7 : Working with an existing infrastructure](#exercice-7--working-with-an-existing-infrastructure)
+    - [Using Datasources](#using-datasources)
+    - [Importing existing resources](#importing-existing-resources)
+  - [Exercice 8 (optionnal) : CI / CD with Azure DevOps](#exercice-8-optionnal--ci--cd-with-azure-devops)
     - [Create an App registration](#create-an-app-registration)
     - [Create a git repository](#create-a-git-repository)
     - [Deploy the prod infrastructure through a pipeline](#deploy-the-prod-infrastructure-through-a-pipeline)
@@ -492,7 +495,70 @@ terraform init --backend-config="backend.secrets.tfvars"
 Redeploy the whole infrastructure.
 
 ---
-## Exercice 7 : CI / CD with Azure DevOps
+## Exercice 7 : Working with an existing infrastructure
+
+The goal of this exercise is to show how Terraform can be used with an infrastructure that already exists. You have two ways of doing that. Either by referencing the existing resources in your code using `datasources`, or by importing the existing resources in your `tfstate` using the `terraform import` command.
+
+> We will work on the `dev` workspace only during this exercise
+
+### Using Datasources
+
+The goal is to create a Storage Account using Terraform, in a Resource Group that already exists in Azure.
+
+- Create a `Resource Group` using the **Azure Portal** using the name :
+  - Name : `rg-<workspace_name>-training-storage
+  - Location : `West Europe`
+- Add a `datasources.tf` file in your Terraform project and add a reference to the `Resource Group`
+
+```bash
+data "azurerm_resource_group" "rg_training_storage" {
+  name = "rg-dev-training-storage"
+}
+```
+
+- Add a `storage.tf` file and create a Storage Account using the [documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account)
+  - The `resource_group_name` metadata must reference the Resource Group using the syntax `data.azurerm_resource_group.rg_training_storage.name`
+  - Note : The Storage Account Name must be unique accross Azure, and without special characters (ex: sadevtraining123)
+- Run a `terraform apply` with the usual parameters
+
+### Importing existing resources
+
+The goal is now to import the resource group within our Terraform project
+
+- First, add in your `main.tf` file the Terraform code to create the Storage Account we created manually when using `datasources`.
+
+```bash
+resource "azurerm_resource_group" "rg_training_storage" {
+  name     = "rg-dev-training-storage"
+  location = var.location
+}
+```
+
+- Update your code to remove the datasource and instead reference the resource group like we did in previous exercises.
+  - Change `data.azurerm_resource_group.rg_training_storage.name` to `azurerm_resource_group.rg_training_storage.name`
+- Delete the datasource
+
+```bash
+data "azurerm_resource_group" "rg_training_storage" {
+  name = "rg-dev-training-storage"
+}
+```
+
+- Import the Resource Group within the tfstate using the `terraform import` [command](https://developer.hashicorp.com/terraform/cli/commands/import)
+  - The command should be `terraform import --var-file=dev.tfvars <terraform_resource_id> <azure_resource_id>`
+    - The `terraform_resource_id` is the id in your Terraform code : `azurerm_resource_group.rg_training_storage`
+    - The `azure_resource_id` is the Azure ID of the resource (available in the portal) and can be retrieved using the `azure cli`.
+
+```bash
+az group show --name <storage_account_name> --query id
+```
+
+> If your account has access to multiple Azure Subscription, use the command `az account set --subscription <subscription_id>` to target the subscription where the storage account is.
+
+The ID should look like : `/subscriptions/<subscription_id>/resourceGroups/rg-dev-training-storage`
+
+---
+## Exercice 8 (optionnal) : CI / CD with Azure DevOps
 
 The goal of this exercise is to run the build of your production infrastructure from Azure DevOps. You need an Azure DevOps project for this exercise, and admin privileges to install extensions for option 1 (you don't need it for option 2).
 
