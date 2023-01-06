@@ -550,7 +550,7 @@ data "azurerm_resource_group" "rg_training_storage" {
     - The `azure_resource_id` is the Azure ID of the resource (available in the portal) and can be retrieved using the `azure cli`.
 
 ```bash
-az group show --name <storage_account_name> --query id
+az group show --name <resource_group_name> --query id
 ```
 
 > If your account has access to multiple Azure Subscription, use the command `az account set --subscription <subscription_id>` to target the subscription where the storage account is.
