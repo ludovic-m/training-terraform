@@ -527,7 +527,7 @@ data "azurerm_resource_group" "rg_training_storage" {
 
 The goal is now to import the resource group within our Terraform project
 
-- First, add in your `main.tf` file the Terraform code to create the Storage Account we created manually when using `datasources`.
+- First, add in your `main.tf` file the Terraform code to create the Resource Group we created manually when using `datasources`.
 
 ```bash
 resource "azurerm_resource_group" "rg_training_storage" {
