@@ -7,7 +7,7 @@ resource "azurerm_network_interface" "nic_training" {
   ip_configuration {
     name                          = "ipconfig-${terraform.workspace}-${each.value.ip_index}"
     subnet_id                     = azurerm_subnet.subnet_training.id
-    private_ip_address            = cidrhost(element(azurerm_subnet.subnet_training.address_prefixes, 1), 10 + each.value.ip_index)
+    private_ip_address            = cidrhost(element(azurerm_subnet.subnet_training.address_prefixes, 0), 10 + each.value.ip_index)
     private_ip_address_allocation = "Static"
   }
 }

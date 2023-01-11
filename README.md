@@ -187,10 +187,12 @@ First, we will create a file named `variables.tf` where we will declare all the 
 
 For example, we will declare the `location` variable, set the default value to `West Europe`, and use it for every resources we have.
 
+> To use a variable in your Terraform code, use the syntax `var.<variable_name>` ex: `var.location`
+
 Perform the following tasks :
 
 
-- Add a `variables.tf` file and declare the `location` and `vnet_address_space` variable with a default value set to `West Europe` for the location
+- Add a `variables.tf` file and declare the `location` and `vnet_address_space` variable with a default value set to `West Europe` for the location. If you set a `default` value, Terraform will deduce its `type`.
 
 ```bash
 variable "location" {
@@ -218,7 +220,7 @@ resource "azurerm_network_interface" "example" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.example.id
     private_ip_address_allocation = "Static"
-    private_ip_address            = cidrhost(element(azurerm_subnet.subnet_training.address_prefixes, 1), 10)
+    private_ip_address            = cidrhost(element(azurerm_subnet.subnet_training.address_prefixes, 0), 10)
   }
 }
 ```
