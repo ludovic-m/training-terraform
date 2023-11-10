@@ -30,6 +30,9 @@
       - [Prerequisite : Create a variable group](#prerequisite--create-a-variable-group)
       - [Option 1 : Use a Terraform extension](#option-1--use-a-terraform-extension)
       - [Option 2 : Use a Container Job](#option-2--use-a-container-job)
+  - [Exercice 8 (optionnal) : CI / CD with Github Actions](#exercice-8-optionnal--ci--cd-with-github-actions)
+    - [Create a Managed Identity](#create-a-managed-identity)
+    - [Create a git repository](#create-a-git-repository-1)
   - [What to do next](#what-to-do-next)
   - [References](#references)
 
@@ -659,6 +662,56 @@ The prerequisites for a container to be used as a build agent are listed there <
 An example of a `Dockerfile` can be found there : <https://github.com/ludovic-m/azure-devops-tf-container-agent/blob/master/Dockerfile>
 
 You can either build your own image, store it on Docker Hub or an Azure Container Registry, or you can use the image built using the Dockerfile mentionned before: `ldvcm/azure-devops-tf-agent`
+
+## Exercice 8 (optionnal) : CI / CD with Github Actions
+
+- Create Github repo
+- Git Init
+- Setup remote & push
+- Setup UMI
+- Write Workflow
+
+### Create a Managed Identity
+
+Since we can't have an interactive login during a pipeline, we'll use a Managed Identity. Also, to avoid storing any secret in Github (even from Environment variables), we'll use Workload Identity Federation.
+Once the managed identity is created in your Subscription, add a Federated Credential using the following properties :
+
+- Federated credential scenario : `Configure a Github issued token to impersonate this application and deploy to Azure`
+- Organization : `<name of your github org - ex: ludovic-m>`
+- Repository: `<name of the repository where your Terraform code is pushed>`
+- Entity: `Environment`
+- Environment: `production`
+
+> The entity and the environment properties suppose that you'll add a metadata `environment` with `production` as value in your Github Actions Workflow
+
+Get the Client ID and the Tenant ID of your Managed Identity (The tenant id is visible by going to the `Microsoft Entra ID` blade)
+
+### Create a git repository
+
+Create a `.gitignore` file at the root of your working folder with the following content, in order to avoid secrets or unecessary files in the repository.
+
+```bash
+**/.terraform/*
+**/secrets/*
+**/backend/*
+*.secrets.*
+*.secrets
+*.secret.*
+*.secret
+*.tfstate
+*.tfstate.*
+*.lock.*
+```
+
+In your Github Org, create an empty projet, then push your code in the `main` branch.
+
+```bash
+git init
+git add .
+git commit -am "Initial Commit"
+git remote add origin <your git repository>
+git push -u origin --all
+```
 
 ## What to do next
 
