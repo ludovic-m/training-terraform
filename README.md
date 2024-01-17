@@ -32,7 +32,12 @@
       - [Option 2 : Use a Container Job](#option-2--use-a-container-job)
   - [Exercice 8 (optionnal) : CI / CD with Github Actions](#exercice-8-optionnal--ci--cd-with-github-actions)
     - [Create a Managed Identity](#create-a-managed-identity)
+    - [Grant permissions to the Managed Identity](#grant-permissions-to-the-managed-identity)
     - [Create a git repository](#create-a-git-repository-1)
+    - [Update the Terraform code to authenticate using the Managed Identity](#update-the-terraform-code-to-authenticate-using-the-managed-identity)
+      - [Update the backend configuration](#update-the-backend-configuration)
+      - [Update the provider configuration](#update-the-provider-configuration)
+    - [Configure the Github Action workflow to use the Federated Credential](#configure-the-github-action-workflow-to-use-the-federated-credential)
   - [What to do next](#what-to-do-next)
   - [References](#references)
 
@@ -671,6 +676,8 @@ You can either build your own image, store it on Docker Hub or an Azure Containe
 - Setup UMI
 - Write Workflow
 
+More infos : <https://www.ludovicmedard.com/terraform-with-github-actions-and-oidc-on-azure>
+
 ### Create a Managed Identity
 
 Since we can't have an interactive login during a pipeline, we'll use a Managed Identity. Also, to avoid storing any secret in Github (even from Environment variables), we'll use Workload Identity Federation.
@@ -685,6 +692,10 @@ Once the managed identity is created in your Subscription, add a Federated Crede
 > The entity and the environment properties suppose that you'll add a metadata `environment` with `production` as value in your Github Actions Workflow
 
 Get the Client ID and the Tenant ID of your Managed Identity (The tenant id is visible by going to the `Microsoft Entra ID` blade)
+
+### Grant permissions to the Managed Identity
+
+Grant `Contributor` permissions on your Azure Subscription to the Managed Identity. You should also grant the `Storage Blob Data Contributor` role on the Storage Account where your `.tfstate` is stored.
 
 ### Create a git repository
 
@@ -712,6 +723,85 @@ git commit -am "Initial Commit"
 git remote add origin <your git repository>
 git push -u origin --all
 ```
+
+### Update the Terraform code to authenticate using the Managed Identity
+
+#### Update the backend configuration
+
+```bash
+backend "azurerm" {
+  resource_group_name  = "<storage_account_resource_group_name>"
+  storage_account_name = "<storage_account_name>"
+  container_name       = "<container_name>"
+  key                  = "tf-example" # can be anything
+  use_oidc             = true # To use OIDC to authenticate to the backend
+  client_id            = "<to_replace>" # The client ID of the Managed Identity
+  subscription_id      = "<to_replace>" # The subscription ID where the storage account exists
+  tenant_id            = "<to_replace>" # The tenant ID where the subscription and the Managed Identity are
+}
+```
+
+#### Update the provider configuration
+
+```bash
+provider "azurerm" {
+  features {}
+  use_oidc        = true # Use OIDC to authenticate to Azure
+  subscription_id = "81d07db3-86e1-49db-90a8-994e8228c86d"
+}
+```
+
+### Configure the Github Action workflow to use the Federated Credential
+
+Define 3 repository secrets :
+
+- AZURE_CLIENT_ID: The client ID of the Managed Identity
+- AZURE_SUBSCRIPTION_ID: The subscription ID where the resources will be deployed
+- AZURE_TENANT_ID: The tenant ID where the Azure subscription and the Managed Identity are
+
+The Github Action workflow should look like that:
+
+```yaml
+name: 'Terraform'
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: login
+      uses: Azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: TF Init
+      run: terraform init
+
+    - name: TF Apply
+      run: terraform apply --auto-approve
+```
+
+The first step is to define when the workflow should be triggered. In our case, it will be triggered on a push to the `main` branch. It’s also what we configured in the Federated Credential.
+
+The second stem is to give the workflow the `write` permissions on the `id-token` of the repository. It’s required to authenticate using the Federated Credential.
+
+Then, finally, the workflow uses the `Azure/login@v1` action to authenticate to Azure using the Federated Credential (and using the repository secrets that we defined earlier).
+
+Both the `terraform init` and `terraform apply` will use OIDC to authenticate to Azure, without having to store a single secret in Github.
 
 ## What to do next
 
